@@ -5,6 +5,8 @@ from pylab import *
 from matplotlib import *
 import matplotlib.dates as mpd
 
+import linefit
+
 #
 # maping bits:
 import matplotlib	# note that we've tome from ... import *. we should probably eventually get rid of that and use the matplotlib namespace.
@@ -808,12 +810,13 @@ class eqcatalog:
 		#
 		return winlen
 
-	def rbomoriQuadPlot(self, catnum=0, mc=None, winlen=None, targmag=None, rbthresh=1.0, bigmag=6.0, fignum=0, intlist=None, rbavelen=None, thislw=1.0, mainEV=None, plotevents=False, mapcatnum=None, rbLegLoc='best', logZ=1.0, mapLLlat=None, mapLLlon=None, mapURlat=None, mapURlon=None, deltaLat=1.0, deltaLon=1.0):
+	def rbomoriQuadPlot(self, catnum=0, mc=None, winlen=None, targmag=None, rbthresh=1.0, bigmag=6.0, fignum=0, intlist=None, rbavelen=None, thislw=1.0, mainEV=None, plotevents=False, mapcatnum=None, rbLegLoc='best', logZ=1.0, mapLLlat=None, mapLLlon=None, mapURlat=None, mapURlon=None, deltaLat=1.0, deltaLon=1.0, weighted=False):
 		# make an awesome quad plot: omori-times, rbRatios, mag-seismicity, map-catalog
 		# catalog -> a yodapy.eqcatalog() object
 		# thislw: linewidth
 		# deltaLat, deltaLon: intervals between lat/lon lines.
 		# for no lines, use None.
+		# weighted: weight each value with 1/chi_sqr, where chi_sqr is from a local linear fit.
 		#
 		if mc==None:
 			# let's just guess that the catalog was selected with a valid mc...
@@ -930,7 +933,10 @@ class eqcatalog:
 		myaxes[2].set_ylabel('RB ratio $r(N=%d)$' % winlen, size=14)
 		#
 		# plotIntervalRatiosAx(winlen=10, cat=None, hitThreshold=1.0, bigmag=None, thisAx=None, ratios=None, delta_t=1, avlen=1, mainEv=None, logZ=None, rbLegLoc='best', reverse=False):
-		catalog.plotIntervalRatiosAx(winlen=winlen, cat=catalog.getcat(catnum), hitThreshold=rbthresh, bigmag=bigmag, thisAx=myaxes[2], ratios=None, delta_t=1, avlen=rbavelen, mainEv=mainEV, logZ=logZ, rbLegLoc=rbLegLoc, reverse=False)
+		if weighted == True:
+			catalog.plotWeightedIntervalRatiosAx(winlen=winlen, cat=catalog.getcat(catnum), hitThreshold=rbthresh, bigmag=bigmag, thisAx=myaxes[2], ratios=None, delta_t=1, avlen=rbavelen, mainEv=mainEV, logZ=logZ, rbLegLoc=rbLegLoc, reverse=False)
+		else:
+			catalog.plotIntervalRatiosAx(winlen=winlen, cat=catalog.getcat(catnum), hitThreshold=rbthresh, bigmag=bigmag, thisAx=myaxes[2], ratios=None, delta_t=1, avlen=rbavelen, mainEv=mainEV, logZ=logZ, rbLegLoc=rbLegLoc, reverse=False)
 	
 		#plt.figure(fignum)
 		myfsize=12
@@ -1016,6 +1022,76 @@ class eqcatalog:
 		thisAx.fill_between(X2,Y2, y2=Ythresh, where=Ygt, color='b', alpha=.9)
 		#
 		return ratios
+	#
+	def plotWeightedIntervalRatiosAx(self, winlen=10, cat=None, hitThreshold=1.0, bigmag=None, thisAx=None, ratios=None, delta_t=1, avlen=1, mainEv=None, logZ=None, rbLegLoc='best', reverse=False):
+		# plot weighted intervals:
+		# fit each interval sub-set to a line; weight by the chi-sqr.
+		# note this also suggests using linear interpolated segments rather than just average value for smoothing... something to do later.
+		#
+		# getNRBratios()
+		# def getNRBratios(self, intervals=None, winlen=10, delta_t=1, reverse=False)
+		# def rb.plotIntervalRatiosAx(self, minmag=3.0, windowLen=10, cat0=None, hitThreshold=1.0, bigmag=5.0, thisAx=None, ratios=None, deltaipos=1, avlen=1, mainEV=None, logZ=1.0, rbLegLoc='best')
+		#
+		if ratios==None:
+			intervals = self.getIntervals(interval_length=1, catList=cat)
+			ratios = self.getNRBratios(intervals=intervals, winlen=winlen, delta_t=delta_t, reverse=reverse)
+		if thisAx==None:
+			thisAx=plt.gca()
+		if thisAx==None:
+			plt.figure()
+			thisAx=plt.gca()
+		#
+		#if len(ratios[0])<6: ratios[0]+=[ratios[0][4]]
+		for i in xrange(1,len(ratios)+1):
+			# "i" is the index of the next entry, like subset = fullset[(i-len):i], returning up to the (i-1)th entry.
+			if len(ratios[i-1])>5:
+				#ratios[i-1]=ratios[i-1][:-1]	# remove mean value entry and recalculate (just in case we've changed something).
+				continue	# this is sloppy, but we've already averaged.
+							# probably, the right thing to do is to do a pre-loop to strip out the averaged values before hand, or
+							# create a proper class object.
+			#
+			i0=max(0, i-avlen)	# early entries we average over what we've got so far.
+			#theseRs=map(math.log10, map(operator.itemgetter(4), ratios[i0:i]))
+			theseRs = map(operator.itemgetter(4), ratios[i0:i])		# note: returning through the (i-1)th entry, hence i -> len()+1.
+			#ratios[i-1]+=[scipy.mean(theseRs)]
+			ratios[i-1]+=[scipy.prod(theseRs)**(1.0/len(theseRs))]	# ... and this (geometric) mean value corresponds to the (i-1)th entry.
+			#
+		#thisAx.set_yscale('log')
+		#
+		# the weighted fit will be log(r)/chi_sqr
+		#
+		X = map(operator.itemgetter(1), ratios)
+		Y0 = map(operator.itemgetter(-1), ratios)
+		chi_sqrs=self.get_ratio_fits(ratios=ratios, fitlen=avlen, x_col=1, y_col=5)
+		#
+		# ... and chi_sqrs can be really small, so Y --> really big. too big for computer-numbers, so let's quasi-normalize this;
+		# what we need is some measure of relative weight. the absolute weight is not important.
+		mean_chi_sqr = numpy.mean(chi_sqrs)
+		chi_sqrs = [x/mean_chi_sqr for x in chi_sqrs]
+		#
+		#Y = numpy.array(map(math.log10, Y0)[-len(chi_sqrs):])/numpy.array(chi_sqrs)
+		Y=map(math.log10, Y0)[-len(chi_sqrs):]
+		Y=[Y[i]/x for i, x in enumerate(chi_sqrs)]
+		#Y = Y.tolist()
+		Y = [math.pow(10., x) for x in Y]
+		X = X[-len(Y):]
+		#
+		#return [X, Y, Y0, chi_sqrs]
+		X2,Y2 = self.zeroFillInts(X,Y, dolog=False)
+		Ythresh = hitThreshold*scipy.ones(len(Y2))
+		Ygt = map(scipy.greater_equal, Y2, Ythresh)	# scipy.greater_equal(), scipy.greter()?
+		Ylt = map(scipy.less_equal,  Y2, Ythresh)
+		#
+		thisAx.set_yscale('log')
+		#print "xylen: %d, %d" % (len(X), len(Y))
+		#thisAx.plot(X, Y, 'k-', lw=1)
+		thisAx.plot([X[0], X[-1]], [1., 1.], 'k-', zorder=0)
+		thisAx.plot([X[0], X[-1]], [hitThreshold, hitThreshold], 'k--', zorder=0)
+		#
+		thisAx.fill_between(X2,Y2,y2=Ythresh, where=Ylt, color='r', alpha=.9)
+		thisAx.fill_between(X2,Y2, y2=Ythresh, where=Ygt, color='b', alpha=.9)
+		#
+		return ratios
 	
 	def zeroFillInts(self, X0,Y0, thresh=1.0, dolog=True):
 		X=scipy.array(X0).copy().tolist()
@@ -1052,7 +1128,58 @@ class eqcatalog:
 		X=mpd.num2date(X)
 		#
 		return (X,Y)
-	
+	#
+	def get_ratio_fits(self, ratios=None, fitlen=1, x_col=1, y_col=5):
+		# ratios: return from rbratios (or any time series)
+		# fitlen: sequence length over which to fit.
+		# ratiocol: data column
+		#
+		# simplified: return [chi_sqrs]
+		#
+		while len(ratios[0])<(y_col+1): y_col-=1
+		#
+		chi_sqrs=[]	# and note that this will return a set shorter than the input.
+		#
+		r_vals = map(operator.itemgetter(y_col), ratios)
+		X_vals = map(operator.itemgetter(x_col), ratios)
+		#
+		if type(X_vals[0])==type(dtm.datetime.now()):
+			X_vals = map(mpd.date2num, X_vals)
+		#
+		for i in xrange(3,len(ratios)):
+			# ... and we fit the logs of the inputs (linearized values)...
+			these_r = map(math.log10, r_vals[max(0, (i-fitlen)):i])
+			#if type(X_vals[0])==type(dtm.datetime.now()):
+			#	these_x = map(mpd.date2num, X_vals[(i-n):i])
+			#else:
+			#	these_x = X_vals[(i-n):i]
+			#
+			these_x = X_vals[max(0, (i-fitlen)):i]
+			#
+			these_p = (0., 0.)	
+			#
+			# now, get a line-fit for this segment...
+			#
+			#print "range: ", max(0, (i-fitlen)), ", ", i
+			#print "these_x: ", these_x
+			#print "these_y: ", these_r
+			lf  = linefit.linefit([these_x, these_r])
+			lf.doFit()
+			#
+			#fitsets[n]['means']          += [meanval]
+			##fitsets[n]['fit_prams']      += [list(fit_vals) + [cov]]
+			##fitsets[n]['mean_fit_prams'] += [list(mean_fit_vals) + [chisqr]]
+			#fitsets[n]['fit_prams'] += [[lf.a, lf.b, lf.meanVar()]]
+			#fitsets[n]['mean_fit_prams'] += [[lf2.a, lf2.b, lf2.meanVar()]]
+			#
+			chi_sqrs += [lf.meanVar()]
+			#
+			#print 'fitses: ', fitsets[n]['fit_prams'][-1]
+		#
+		#
+		return chi_sqrs
+	#
+	#
 	def testMap(self):
 		import cPickle
 		import time
