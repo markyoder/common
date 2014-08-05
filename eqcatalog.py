@@ -1064,10 +1064,13 @@ class eqcatalog:
 		Y0 = map(operator.itemgetter(-1), ratios)
 		chi_sqrs=self.get_ratio_fits(ratios=ratios, fitlen=avlen, x_col=1, y_col=5)
 		#
+		# and let's use the std-dev, not the var so numbers don't explode so badly (should not make a huge difference).
+		chi_sqrs = [x**.5 for x in chi_sqrs]
+		#
 		# ... and chi_sqrs can be really small, so Y --> really big. too big for computer-numbers, so let's quasi-normalize this;
 		# what we need is some measure of relative weight. the absolute weight is not important.
 		mean_chi_sqr = numpy.mean(chi_sqrs)
-		chi_sqrs = [x/mean_chi_sqr for x in chi_sqrs]
+		chi_sqrs = [x/mean_chi_sqr for x in chi_sqrs]		# and a bit of normalization to keep the numbers under control...
 		#
 		#Y = numpy.array(map(math.log10, Y0)[-len(chi_sqrs):])/numpy.array(chi_sqrs)
 		Y=map(math.log10, Y0)[-len(chi_sqrs):]
