@@ -14,11 +14,13 @@
 class xy_index(dict):
 	
 	#
-	def __init__(self, x0=0., y0=0., dx=.1, dy=.1):
+	def __init__(self, data_in=None, x0=0., y0=0., dx=.1, dy=.1):
 		self.x0 = x0
 		self.y0 = y0
 		self.dx = dx
 		self.dy = dy
+		#
+		self.data_in=data_in		# though eventually, we'll skip just adding this to populate the dict.
 		#
 		#self.catalog={}
 		#
@@ -32,3 +34,19 @@ class xy_index(dict):
 			self[i_x]={}
 		if self[i_x].has_key(i_y)==False:
 			self[i_x][i_y]={}
+		#
+	#
+	#
+	def get_x_index(self, x, x0=None, dx=None):
+		if x0==None: x0=self.x0
+		if dx==None: dx=self.dx
+		#
+		return (float(x)-x0)/float(dx)
+	#
+	def get_y_index(self, y, y0=None, dy=None):
+		if y0==None: y0=self.y0
+		if dy==None: dy=self.dy
+		#
+		return (float(y)-y0)/float(dy)
+	#
+	
