@@ -116,6 +116,8 @@ def catfromANSS(lon=[135., 150.], lat=[30., 41.5], minMag=4.0, dates0=[dtm.datet
 		myDt+=dtm.timedelta(seconds=sc)
 		myDt+=dtm.timedelta(microseconds=microsecs)
 		#
+		# note: we switch the order of depth, mag here. 
+		#"list" gives [dt, lat, lon, depth, mag]; "cat" gives [dt, lat, lon, mag, depth?]
 		rlist +=[[myDt, float(rw[1]), float(rw[2]), float(rw[4]), float(rw[3])]]
 		if fout!=None:
 			myDtStr='%d/%d/%d %d:%d:%d.%d' % (myDt.year, myDt.month, myDt.day, myDt.hour, myDt.minute, myDt.second, myDt.microsecond)	
@@ -129,8 +131,78 @@ def catfromANSS(lon=[135., 150.], lat=[30., 41.5], minMag=4.0, dates0=[dtm.datet
 	 
 	#return catlist
 	return rlist
+#
+def dictfromANSS(lons=[135., 150.], lats=[30., 41.5], mc=4.0, date_range=[dtm.datetime(2005,01,01, tzinfo=tzutc), None], Nmax=999999, fout='cats/mycat.cat'):
+	#
+	# get a dictionary type catalog (aka, a list of dicts[{}, {}, ...]
+	# note the modified syntax to the newer standards (lon-->lons, minMag --> mc, dates0-->date_range) for
+	# consistency with newer modules and codes.
+	#
+	if date_range[1]==None:
+		# in the past, this field requred a DATE type object; DATETIME would break.
+		# that problem appears to be fixed now.
+		date_range[1]=dtm.datetime.now(tzutc)
+	#	
+	catlist=getANSSlist(lons, lats, mc, date_range, Nmax, None)
+	if fout==None: print " no file."
+	
+	if fout!=None:
+		f=open(fout, 'w')
+		f.write("#anss catalog\n")
+		f.write("#lons=%s\tlats=%s\tm0=%f\tdates=%s\n" % (str(lons), str(lats), mc, str(date_range)))
+	
+	rlist=[]
+	for rw in catlist:
+		# simple, right? except that ANSS has a habit of writing useless date-times like "2001/10/08 24:00:07.62" (hour=24), or
+		# where minute=60. we could toss these. for now, assume 2001/10/8 24:00:00 -> 2001/10/9/00:00:00. change by proper time-arithmetic.
+		# first, parse the date-string:
+		strDt, strTm=rw[0].split()[0], rw[0].split()[1]
+		if '/' in strDt: delim='/'
+		if '-' in strDt: delim='-'
+		strDts=strDt.split(delim)
+		strTms=strTm.split(':')
+		yr=int(strDts[0])
+		mnth=int(strDts[1])
+		dy=int(strDts[2])
+		hr=int(strTms[0])
+		mn=int(strTms[1])
+		sc=float(strTms[2])
+		microsecs=(10**6)*sc%1.
+		# one approach is to start with year, month and add all the subsequent quantities using datetime.timedelta objects, which we have to
+		# do once we get into callendar addition anyway...
+		#so let's assume the date part is correct:
+		myDt=dtm.datetime(yr, mnth, dy, tzinfo=tzutc)
+		#mytimedelta=dtm.timedelta(hours=hr)
+		myDt+=dtm.timedelta(hours=hr)
+		myDt+=dtm.timedelta(minutes=mn)
+		myDt+=dtm.timedelta(seconds=sc)
+		myDt+=dtm.timedelta(microseconds=microsecs)
+		#
+		# note: we switch the order of depth, mag here. 
+		#"list" gives [dt, lats, lons, depth, mag]; "cat" gives [dt, lats, lons, mag, depth?]
+		#
+		#rlist +=[[myDt, float(rw[1]), float(rw[2]), float(rw[4]), float(rw[3])]]
+		rlist +=[{'event_date':myDt, 'lats':float(rw[1]), 'lons':float(rw[2]), 'mag':float(rw[4]), 'depth':float(rw[3])}]
+		#
+		if fout!=None:
+			# if we wanted to get nutty, we could output this as JSON...
+			#
+			myDtStr='%d/%d/%d %d:%d:%d.%d' % (myDt.year, myDt.month, myDt.day, myDt.hour, myDt.minute, myDt.second, myDt.microsecond)	
+			#
+			#f.write('%s\t%s\t%s\t%s\n' % (rw[0], rw[1], rw[2], rw[4]))
+			#f.write('%s\t%s\t%s\t%s\n' % (myDtStr, rw[1], rw[2], rw[4]))
+			f.write('%s\t%s\t%s\t%s\t%s\n' % (myDtStr, rw[1], rw[2], rw[4], rw[3]))	# indlude depth...
+	if fout!=None:
+		f.close()
+	
+	 
+	#return catlist
+	return rlist
 
 def getANSSlist(lon=[-125, -115], lat=[32, 45], minMag=4.92, dates0=[dtm.datetime(2001,01,01, tzinfo=tzutc), dtm.datetime(2010, 12, 31, tzinfo=tzutc)], Nmax=999999, fin=None):
+	#
+	# this is typically a preliminary function call. it returns a list object-catalog. the date will be in string format.
+	# typicall, use catfromANSS() for a more useful list. also see the (new) dictfromANSS() for a dict. type catalog.
 	#
 	# note: this appears to be a bad idea for global downloads. a full catalog is ~4GB, which kills my computer.
 	#
