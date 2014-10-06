@@ -1,5 +1,5 @@
-%import math
-%import numpy
+import math
+import numpy
 
 def findClustersSquare(gridlist=[], L=None):
 	# find clusters and their size (for square lattice).
