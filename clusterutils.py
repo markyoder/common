@@ -1,5 +1,5 @@
-%import math
-%import numpy
+import math
+import numpy
 
 def findClustersSquare(gridlist=[], L=None):
 	# find clusters and their size (for square lattice).
@@ -115,7 +115,7 @@ def findClustersSquare(gridlist=[], L=None):
 		rlist+=[rw[1]]
 	return rlist
 
-def getNeighbors(i, nxyz=[] geom=0, bounds=0):
+def getNeighbors(i, nxyz=[], geom=0, bounds=0):
 	# nxyz: [width, length, depth, etc.]
 	if geom==0 or geom=='square' or geom==None:
 		# square geom.
