@@ -206,7 +206,7 @@ def add_square(lat0, lon0, sidelen, altitude = 0.0, description = " ", name = " 
 	return strKml
 
 def PI2KMLpolys(data, z0=0, ix=0, iy=1, iz=2, dx=.1, dy=.1, strStyle='orangsies', altitude = 0.0, description = " ", name = " ", range = 6000, tilt = 45, heading = 0):
-	# take in a wad of PI data points, spit out KML polygons (huge string-o-text)
+	# take in a wad of PI (pattern informatics) data points, spit out KML polygons (huge string-o-text)
 	#
 	# get a tuple of poly-tuples.
 	mypolys = contours.boxyContour(data, z0, ix, iy, iz, dx, dy)
