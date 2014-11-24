@@ -133,7 +133,7 @@ def catfromANSS(lon=[135., 150.], lat=[30., 41.5], minMag=4.0, dates0=[dtm.datet
 	# to do:
 	# re-cast rlist as a recarray. here's probaby the best way to do this (there are lots of ways to
 	# cast recarrays; this appears to be the most direct:
-	# rlist=numpy.rec.array(rlist, dtype=[('event_date', 'M8[us]'), ('lat','f'), ('lon','f'), ('mag','f'), ('depth','f')])
+	# rlist=numpy.rec.array(rlist, dtype=[('event_date', 'M8[us]'), ('lat','f'), ('lon','f'), ('mag','f'), ('depth','f')])	# note: numpy.rec.array() also has "names=" and "formats=" keywords.
 	# (but we'll want to test existing programs to be sure this doesn't break).
 	return rlist
 #
