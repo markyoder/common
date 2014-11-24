@@ -67,7 +67,7 @@ def getANSStoFilehandler(lon=[-125, -115], lat=[32, 45], minMag=4.92, dates0=[dt
 	return f
 
 #def catfromANSS(lon=[135., 150.], lat=[30., 41.5], minMag=4.0, dates0=[dtm.date(2005,01,01), None], Nmax=999999, fout='cats/mycat.cat'):
-def catfromANSS(lon=[135., 150.], lat=[30., 41.5], minMag=4.0, dates0=[dtm.datetime(2005,01,01, tzinfo=tzutc), None], Nmax=999999, fout='cats/mycat.cat'):
+def catfromANSS(lon=[135., 150.], lat=[30., 41.5], minMag=4.0, dates0=[dtm.datetime(2005,01,01, tzinfo=tzutc), None], Nmax=999999, fout=None):
 	# get a basic catalog. then, we'll do a poly-subcat. we need a consistent catalog.
 	# eventually, cut up "japancatfromANSS()", etc. to call this base function and move to yodapy.
 	#
@@ -130,6 +130,11 @@ def catfromANSS(lon=[135., 150.], lat=[30., 41.5], minMag=4.0, dates0=[dtm.datet
 	
 	 
 	#return catlist
+	# to do:
+	# re-cast rlist as a recarray. here's probaby the best way to do this (there are lots of ways to
+	# cast recarrays; this appears to be the most direct:
+	# rlist=numpy.rec.array(rlist, dtype=[('event_date', 'M8[us]'), ('lat','f'), ('lon','f'), ('mag','f'), ('depth','f')])
+	# (but we'll want to test existing programs to be sure this doesn't break).
 	return rlist
 #
 def dictfromANSS(lons=[135., 150.], lats=[30., 41.5], mc=4.0, date_range=[dtm.datetime(2005,01,01, tzinfo=tzutc), None], Nmax=999999, fout='cats/mycat.cat'):
