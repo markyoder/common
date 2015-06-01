@@ -3,6 +3,9 @@ import pytz
 import calendar
 import operator
 import urllib
+import urllib2
+import requests
+import numpy
 #
 # note on datetimes:
 # timezone awareness is confusing but not as bad as it looked a minute ago.
@@ -67,12 +70,14 @@ def getANSStoFilehandler(lon=[-125, -115], lat=[32, 45], minMag=4.92, dates0=[dt
 	return f
 
 #def catfromANSS(lon=[135., 150.], lat=[30., 41.5], minMag=4.0, dates0=[dtm.date(2005,01,01), None], Nmax=999999, fout='cats/mycat.cat'):
-def catfromANSS(lon=[135., 150.], lat=[30., 41.5], minMag=4.0, dates0=[dtm.datetime(2005,01,01, tzinfo=tzutc), None], Nmax=999999, fout=None):
+def catfromANSS(lon=[135., 150.], lat=[30., 41.5], minMag=4.0, dates0=[dtm.datetime(2005,01,01, tzinfo=tzutc), None], Nmax=None, fout=None, rec_array=True):
 	# get a basic catalog. then, we'll do a poly-subcat. we need a consistent catalog.
 	# eventually, cut up "japancatfromANSS()", etc. to call this base function and move to yodapy.
 	#
 	# note: there may be a version inconsisency. older versions of this function may have returned catlist raw, in which
 	# [..., depth, mag], where we regurn [..., mag, depth] here.
+	#
+	if Nmax==None: Nmax=999999
 	#
 	if dates0[1]==None:
 		# i think this needs a "date" object, and datetime breaks.
@@ -124,7 +129,10 @@ def catfromANSS(lon=[135., 150.], lat=[30., 41.5], minMag=4.0, dates0=[dtm.datet
 			#
 			#f.write('%s\t%s\t%s\t%s\n' % (rw[0], rw[1], rw[2], rw[4]))
 			#f.write('%s\t%s\t%s\t%s\n' % (myDtStr, rw[1], rw[2], rw[4]))
-			f.write('%s\t%s\t%s\t%s\t%s\n' % (myDtStr, rw[1], rw[2], rw[4], rw[3]))	# indlude depth...
+			
+			f.write('%s\n' % '\t'.join([str(x) for x in [myDtStr] + rw[1:]]))
+			
+			#f.write('%s\t%s\t%s\t%s\t%s\n' % (myDtStr, rw[1], rw[2], rw[4], rw[3]))	# indlude depth...
 	if fout!=None:
 		f.close()
 	
@@ -135,7 +143,86 @@ def catfromANSS(lon=[135., 150.], lat=[30., 41.5], minMag=4.0, dates0=[dtm.datet
 	# cast recarrays; this appears to be the most direct:
 	# rlist=numpy.rec.array(rlist, dtype=[('event_date', 'M8[us]'), ('lat','f'), ('lon','f'), ('mag','f'), ('depth','f')])	# note: numpy.rec.array() also has "names=" and "formats=" keywords.
 	# (but we'll want to test existing programs to be sure this doesn't break).
+	#
+	# yoder: cast as recarray:
+	if rec_array:
+		rlist=numpy.rec.array(rlist, dtype=[('event_date', 'M8[us]'), ('lat','f'), ('lon','f'), ('mag','f'), ('depth','f')])
+	
 	return rlist
+#
+def cat_from_usgs(duration='week', mc=2.5, rec_array=True):
+	# use: http://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/2.5_day.csv
+	# or better (maybe), use the geojson format:
+	#    http://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/2.5_day.geojson
+	#
+	# for one week:
+	# http://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/2.5_week.csv
+	# http://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/2.5_week.geojson
+	#
+	# the geojson format is pretty awesome, but we just want a catalog, so for now, let's keep it old-school simple and use the .csv
+	# incidentally, to read the geojson, use something like:
+	# with open(gj_file, 'r') as f:
+	#	data = json.load(f)
+	# quakes = data['features']		# it will have (presently) 4 primary entries, ['type', 'features', 'bbox', 'metadata']
+	# geojson returns the event date as miliseconds since 1-1-1970 (i think). note that matplotlib.dates.date2num() returns
+	# (fractional) number of days since 0001-01-01 00:00:00 UTC, plus one, where the "plus one" is a "historical artifact" of some sort.
+	#
+	# one way to fetch as a file handle from the url...
+	# f = urllib.urlopen('http://www.ncedc.org/cgi-bin/catalog-search2.pl', urllib.urlencode(anssPrams))
+	# also, a = requests.get(url)	returns an iterable.
+	#
+	if duration not in ('day', 'week', 'month'): duration = 'week'
+	if isinstance(mc, int): mc=float(mc)
+	if isinstance(mc, float): mc=str(mc)
+	if mc not in ('2.5', '4.5', 'significant', 'all'): mc='2.5'
+	#
+	#mag_string = '%s_%s' % (mc, duration)
+	#
+	# for now, stick with the csv:
+	cat_out = []
+	print "url_str: %s" % ('http://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/%s_%s.csv' % (mc, duration))
+	#url_data = requests.get('http://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/%s_%s.csv' % (mc, duration))
+	#with urllib.urlopen('http://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/%s_%s.csv' % (mc, duration)) as furl:
+	furl = urllib.urlopen('http://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/%s_%s.csv' % (mc, duration))
+	if True:
+	#for url_rw in url_data:
+		cols = furl.readline().replace('\n', '').split(',')
+		#
+		# index of cols we care about (... later):
+		#my_cols = ['latitude'
+		#
+		#my_col_names = ['event_date', 'lat', 'lon', 'mag', 'depth']
+		#my_col_types = ['M8[us]', 'float', 'float', 'float', 'float']
+		#
+		for rw in furl:
+			if rw[0] in (' ', '\n', '\r', '\t', '#'): continue
+			#
+			rw=rw.replace('\n', '')
+			rws = rw.split(',')
+			dt_str = rws[0]
+			dt_str, tm_str = dt_str.split('T')
+			yr, mnth, dy = [int(x) for x in dt_str.split('-')]
+			hr, mn, secs = [x for x in tm_str.split(':')]
+			secs, msecs = [int(x) for x in (secs[:-1] if secs[-1]=='Z' else secs).split('.') ]
+			hr, mn = [int(x) for x in [hr, mn]]
+			#
+			this_dt = dtm.datetime(yr, mnth, dy, hr, mn, secs, msecs, tzinfo=pytz.timezone('UTC'))
+			#
+			# and put together a row in the standard order/format (which will give way to more descriptive formats soon enough...):
+			# anssList+=[[rwEvdt, rwLat, rwLon, rwDepth, rwMag, rwMagType, rwNst, rwGap, rwClo, rwrms, rwsrc, rwCatEventId]]
+			#
+			#out_rw  = [this_dt] + [float(x) for x in [rws[1:3] + rws[4] + rws[3]]] + rws[5:7]
+			# gap, rwClo + rms
+			#out_rw += [float(x) for x in rws[rw[7:10]]]
+			# for these, the "id" field is just the datetime, and anyway we only really care about a few of these fields. so let's wrap this up in a recarray,
+			#
+			#
+			cat_out += [[this_dt] + [float(x) for x in rws[1:3] + [rws[4], rws[3]]]]
+		#
+		if rec_array:
+			cat_out=numpy.rec.array(cat_out, dtype=[('event_date', 'M8[us]'), ('lat','f'), ('lon','f'), ('mag','f'), ('depth','f')])	
+		#
+		return cat_out
 #
 def dictfromANSS(lons=[135., 150.], lats=[30., 41.5], mc=4.0, date_range=[dtm.datetime(2005,01,01, tzinfo=tzutc), None], Nmax=999999, fout='cats/mycat.cat'):
 	#
