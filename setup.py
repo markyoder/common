@@ -8,6 +8,6 @@ setup(name='common',
       author='Mark R. Yoder',
       author_email='mark.yoder@gmail.com',
       url='',
-      py_modules = ['ANSStools', 'clusterutils', 'contours', 'eqcatalog', 'eqcataloglite', 'kmlparser', 'linefit', 'yodapy', 'rbIntervals', 'ygmapbits'],
+      py_modules = ['ANSStools', 'clusterutils', 'contours', 'eqcatalog', 'eqcataloglite', 'kmlparser', 'linefit', 'yodapy', 'rbIntervals', 'ygmapbits', 'pca_tools'],
       #packages=['../common'],
      )

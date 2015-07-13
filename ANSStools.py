@@ -1,4 +1,5 @@
 import datetime as dtm
+import matplotlib.dates as mpd
 import pytz
 import calendar
 import operator
@@ -14,25 +15,36 @@ import numpy
 tzutc=pytz.timezone('UTC')
 
 def anssDateStr(x=dtm.datetime.now(pytz.timezone('UTC'))):
-	yr=x.year
-	mo=x.month
-	dy=x.day
-	hr=x.hour
-	mn=x.minute
-	sc=x.second
+	# yoder, 13 july 2015: ANSS seems to have made some changes. these date formats are breaking. probalby a matter of leading 0's in dates; might be fractional seconds.
+	#yr=x.year
+	#mo=x.month
+	#dy=x.day
+	#hr=x.hour
+	#mn=x.minute
+	#sc=x.second
+	#ms=x.microsecond
+	#fsecs=float(sc) + float(ms)*(10**(-6.0))
+	#
+	yr = str(x.year)
+	mo = ('00' + str(x.month))[-2:]
+	dy = ('00' + str(x.day))[-2:]
+	hr = ('00' + str(x.hour))[-2:]
+	mn = ('00' + str(x.minute))[-2:]
+	sc = ('00' + str(x.second))[-2:]
+	#
+	# ANSS seems to be complaining about fractional seconds, so skip this and return integer seconds.
+	'''
 	ms=x.microsecond
 	fsecs=float(sc) + float(ms)*(10**(-6.0))
 	#
-	# for now, assume the dates are properly aggregated -- no minutes=60, etc.
-	# string-fixing is probably not necessary.
-	#mo = ('00' + str(mo))[-2:]
-	#dy = ('00' + str(dy))[-2:]
-	#hr = ('00' + str(hr))[-2:]
-	#mn = ('00' + str(mn))[-2:]
-	#sc = ('00' + str(sc))[-2:]
+	# trim extra zeros:
+	fsecs_str = str(fsecs)
+	while ('.' in fsecs_str and len(fsecs_str)>3 and fsecs_str[-1]=='0'):
+		fsecs_str = fsecs_str[:-1]
+	'''
 	#
-	#return '%d/%s/%s,%s:%s:%f' % (yr, mo, dy, hr, mn, secs)
-	return '%d/%d/%d,%d:%d:%f' % (yr, mo, dy, hr, mn, fsecs)
+	#return '%s/%s/%s,%s:%s:%f' % (yr, mo, dy, hr, mn, fsecs)
+	return '%s/%s/%s,%s:%s:%s' % (yr, mo, dy, hr, mn, sc)
 	
 #def getANSStoFilehandler(lon=[-125, -115], lat=[32, 45], minMag=4.92, dates0=[dtm.date(2001,01,01), dtm.date(2010, 12, 31)], Nmax=999999):
 def getANSStoFilehandler(lon=[-125, -115], lat=[32, 45], minMag=4.92, dates0=[dtm.datetime(2001,01,01, tzinfo=tzutc), dtm.datetime(2010, 12, 31, tzinfo=tzutc)], Nmax=999999):
@@ -59,11 +71,12 @@ def getANSStoFilehandler(lon=[-125, -115], lat=[32, 45], minMag=4.92, dates0=[dt
 	dates=dates0
 	datestr1 = anssDateStr(dates[0])
 	datestr2 = anssDateStr(dates[1])
-	print datestr1, datestr2
+	#print datestr1, datestr2
 	#
 	#anssPrams={'format':'cnss', 'output':'readable', 'mintime':str(dates[0]).replace('-', '/'), 'maxtime':str(dates[1]).replace('-', '/'), 'minmag':str(minMag), 'minlat':lat[0], 'maxlat':lat[1], 'minlon':lon[0], 'maxlon':lon[1], 'etype':'E', 'searchlimit':Nmax}
 	# so this is better, but i think it is still limited to 1 second resolution.
 	anssPrams={'format':'cnss', 'output':'readable', 'mintime':datestr1, 'maxtime':datestr2, 'minmag':str(minMag), 'minlat':lat[0], 'maxlat':lat[1], 'minlon':lon[0], 'maxlon':lon[1], 'etype':'E', 'searchlimit':Nmax}
+	#print "debug: ", anssPrams
 	f = urllib.urlopen('http://www.ncedc.org/cgi-bin/catalog-search2.pl', urllib.urlencode(anssPrams))
 	#
 	# we might return f, a string of f, or maybe a list of lines from f. we'll work that out shortly...
@@ -98,6 +111,9 @@ def catfromANSS(lon=[135., 150.], lat=[30., 41.5], minMag=4.0, dates0=[dtm.datet
 	for rw in catlist:
 		# simple, right? except that ANSS has a habit of writing useless date-times like "2001/10/08 24:00:07.62" (hour=24), or
 		# where minute=60. we could toss these. for now, assume 2001/10/8 24:00:00 -> 2001/10/9/00:00:00. change by proper time-arithmetic.
+		#
+		# it might be worth checking to see if numpy.datetime64() handles these exceptions.
+		#
 		# first, parse the date-string:
 		strDt, strTm=rw[0].split()[0], rw[0].split()[1]
 		if '/' in strDt: delim='/'
@@ -123,7 +139,11 @@ def catfromANSS(lon=[135., 150.], lat=[30., 41.5], minMag=4.0, dates0=[dtm.datet
 		#
 		# note: we switch the order of depth, mag here. 
 		#"list" gives [dt, lat, lon, depth, mag]; "cat" gives [dt, lat, lon, mag, depth?]
-		rlist +=[[myDt, float(rw[1]), float(rw[2]), float(rw[4]), float(rw[3])]]
+		# if we add a float-date value to the end of this, does it screw up any conventions? might screw up BASScasts. so we can add it here -- but
+		# it has to be at the end. so let's give it a go (sometimes facilitates easier date-handling), but be prepared to drop it.
+		# 
+		#rlist +=[[myDt, float(rw[1]), float(rw[2]), float(rw[4]), float(rw[3])]]
+		rlist +=[[myDt, float(rw[1]), float(rw[2]), float(rw[4]), float(rw[3]), mpd.date2num(myDt)]]
 		if fout!=None:
 			myDtStr='%d/%d/%d %d:%d:%d.%d' % (myDt.year, myDt.month, myDt.day, myDt.hour, myDt.minute, myDt.second, myDt.microsecond)	
 			#
@@ -146,7 +166,9 @@ def catfromANSS(lon=[135., 150.], lat=[30., 41.5], minMag=4.0, dates0=[dtm.datet
 	#
 	# yoder: cast as recarray:
 	if rec_array:
-		rlist=numpy.rec.array(rlist, dtype=[('event_date', 'M8[us]'), ('lat','f'), ('lon','f'), ('mag','f'), ('depth','f')])
+		#rlist=numpy.rec.array(rlist, dtype=[('event_date', 'M8[us]'), ('lat','f'), ('lon','f'), ('mag','f'), ('depth','f')])
+		# note: specify f8 (or greater), or float dates might be truncated).
+		rlist=numpy.rec.array((rlist if len(rlist)>0 else [[]]), dtype=[('event_date', 'M8[us]'), ('lat','f8'), ('lon','f8'), ('mag','f8'), ('depth','f8'), ('event_date_float', 'f8')])
 	
 	return rlist
 #

@@ -9,6 +9,7 @@
 # 
 # indices are defined by bin width: i_x = (x-x0)/dx
 #
+# note: i think i effectively rewrote this and called it bindex.py (binned incex); see globalETAS repository.
 '''
 
 class xy_index(dict):
@@ -44,6 +45,7 @@ class xy_index(dict):
 		return (float(x)-x0)/float(dx)
 	#
 	def get_y_index(self, y, y0=None, dy=None):
+		# note: this can be problematic with floating point errors. i think that can be fixed using round().
 		if y0==None: y0=self.y0
 		if dy==None: dy=self.dy
 		#
