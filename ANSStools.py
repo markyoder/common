@@ -105,6 +105,7 @@ def catfromANSS(lon=[135., 150.], lat=[30., 41.5], minMag=4.0, dates0=[dtm.datet
 	if fout!=None:
 		f=open(fout, 'w')
 		f.write("#anss catalog\n")
+		f.write("#query_date(UTC): %s" % str(dtm.datetime.now(pytz.timezone('UTC'))))
 		f.write("#lon=%s\tlat=%s\tm0=%f\tdates=%s\n" % (str(lon), str(lat), minMag, str(dates0)))
 	
 	rlist=[]
@@ -150,13 +151,13 @@ def catfromANSS(lon=[135., 150.], lat=[30., 41.5], minMag=4.0, dates0=[dtm.datet
 			#f.write('%s\t%s\t%s\t%s\n' % (rw[0], rw[1], rw[2], rw[4]))
 			#f.write('%s\t%s\t%s\t%s\n' % (myDtStr, rw[1], rw[2], rw[4]))
 			
-			f.write('%s\n' % '\t'.join([str(x) for x in [myDtStr] + rw[1:]]))
+			#f.write('%s\n' % '\t'.join([str(x) for x in [myDtStr] + rw[1:]]))
+			f.write('%s\n' % '\t'.join([str(x) for x in [myDtStr, float(rw[1]), float(rw[2]), float(rw[4]), float(rw[3]), mpd.date2num(myDt)]]))
 			
 			#f.write('%s\t%s\t%s\t%s\t%s\n' % (myDtStr, rw[1], rw[2], rw[4], rw[3]))	# indlude depth...
 	if fout!=None:
 		f.close()
-	
-	 
+	# 
 	#return catlist
 	# to do:
 	# re-cast rlist as a recarray. here's probaby the best way to do this (there are lots of ways to
