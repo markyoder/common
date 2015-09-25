@@ -3,11 +3,9 @@ import numpy
 import pylab as plt
 import math
 import random
-
+#
 from  matplotlib.mlab import PCA
-
-
-
+#
 def pca1(theta=math.pi/6., a=1.0, b=.5, x0=0., y0=0., N=1000):
 	#
 	Rx = random.Random()
