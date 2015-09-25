@@ -32,10 +32,15 @@ def pca1(theta=math.pi/6., a=1.0, b=.5, x0=0., y0=0., N=1000):
 	my_cov = numpy.dot(numpy.array(zip(*dXY)),numpy.array(dXY))/(float(N)-1.)
 	# use eigh() for symmetric or hermitian matrices. it's faster and avoids some round-off errors that can result in complex/imaginary valued elements.
 	# ... and sort by eigen-values
-	eig_vals, eig_vecs = numpy.linalg.eigh(my_cov)		# ... and there's something weird about eig() vs eigh() they return somewhat differend eigen values.
+	eig_vals, eig_vecs = numpy.linalg.eigh(my_cov)		# ... and there's something weird about eig() vs eigh() they return somewhat different eigen values.
 	#eig_vecs = numpy.array(zip(*eig_vecs))	# transpose so each 'row' is an eigen vector.
 	eig_vals, eig_vecs = zip(*sorted(zip(eig_vals, eig_vecs.transpose()), key=lambda x:x[0]))		# and we can use reverse=True, or just remember that we're reverse order sorted.
-	axis_weights = [math.sqrt(e/max(eig_vals)) for e in eig_vals]
+	eig_vals_norm = numpy.linalg.norm(eig_vals)
+	#axis_weights = [math.sqrt(e/max(eig_vals)) for e in eig_vals]		# i think this is pretty standard, but it seems that normalizing these vectors so that e1*82 + e2**2 = 1
+	#																						# also makes sense.
+	axis_weights = [e/eig_vals_norm for e in eig_vals]
+	print "normed(eig_vals): %f (normed-check (should be 1.0): %f)" % (eig_vals_norm, numpy.linalg.norm(axis_weights))
+	
 	#	
 	print "eigs: ", eig_vals, eig_vecs
 	frac_x, frac_y = [x/(numpy.linalg.norm(eig_vals)**2.) for x in eig_vals]
@@ -162,7 +167,7 @@ def pca_test2(theta=math.pi/6., N=1000, x0=0., y0=0., fignum=0):
 	my_data = make_test_data(theta=theta, N=N, x0=x0, y0=y0)
 	my_pca = yoda_pca(my_data)
 	#
-	print my_pca
+	print "my_pca: ", my_pca
 	#return my_pca
 	ax_x, ax_y = zip(*my_pca[1])
 	axis_weights = [math.sqrt(e/max(my_pca[0])) for e in my_pca[0]]
@@ -179,8 +184,9 @@ def pca_test2(theta=math.pi/6., N=1000, x0=0., y0=0., fignum=0):
 	yprime = my_pca[1].dot([0.,1.]) + numpy.array([.5,0.])
 	#
 	plt.plot(*zip([.5,0.], xprime), marker='s', ls='--', lw=2, color='r')
-	plt.plot(*zip([.5,0.], yprime), marker='s', ls='--', lw=2, color='g')
-
+	plt.plot(*zip([.5,0.], ypprime), marker='s', ls='--', lw=2, color='g')
+#
+#
 def yoda_pca(data_in):
 	# we'll rename this later. for now, this is just a super simple PCA approach to finding principal axes. we'll leave them in their original order
 	# and leave them all in tact. it's basically a fitting algorithm so we can construct a transformation matrix between two frames.
