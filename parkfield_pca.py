@@ -42,6 +42,9 @@ def parkfield_pca(L_r_factor=3.0):
 	print "e_vecs:", e_vecs[0][0], e_vecs[0][1], e_vecs[1][0], e_vecs[1][1]
 	circle_xy = simple_circle(x=x, y=y, r=L_r*L_r_factor/111.1)
 	#
+	# a rotational transformation:
+	#  elliptical distribution; a = r, b = {something < a}. this is distinct from the equal-area transform, in which a>r.
+	#  note that for this transform, the initial rate-density is adjusted to the new (surface projection) area.
 	mu_x, mu_y = [numpy.mean(col) for col in zip(*circle_xy)]
 	#print "means: ", mu_x, mu_y
 	#circle_xy_prime = numpy.dot([[rw[0]-mu_x, rw[1]-mu_y] for rw in circle_xy], e_vecs_prime)
