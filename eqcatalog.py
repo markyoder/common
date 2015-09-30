@@ -140,7 +140,14 @@ class eqcatalog:
 	#
 	def checkdates(self, cat=None):
 		if cat==None: cat=self.getcat(0)
-		for i in xrange(len(cat)):
+		#for i in xrange(len(cat)):
+		for i,rw in enumerate(cat):
+			#
+			if isinstance(rw[0], numpy.datetime64) or hasattr(rw[0], 'tzinfo')==False: 
+				print 'rw[0]', rw[0]
+				cat[i][0] = mpd.num2date(mpd.datestr2num(str(rw[0])))
+				#cat[i][0] = cat[i][0].tolist()
+				print cat[i][0], type(cat[i][0])
 			if cat[i][0].tzinfo==None:
 				# no time-zone info. add UTC timezone.
 				dt0=cat[i][0]
