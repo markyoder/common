@@ -389,3 +389,13 @@ def getANSSlist(lon=[-125, -115], lat=[32, 45], minMag=4.92, dates0=[dtm.datetim
 
 def isnumeric(value):
   return str(value).replace(".", "").replace("-", "").isdigit()
+ 
+def numpy_date_to_datetime(numpy_date, tz='UTC'):
+	#
+	if isinstance(numpy_date, dtm.datetime): return numpy.date
+	#
+	if isinstance(numpy_date,float): return mpd.num2date(numpy_date)
+	#
+	return dtm.datetime(*list(numpy_date.tolist().timetuple())[:6] + [numpy_date.tolist().microsecond], tzinfo=pytz.timezone(tz))
+#
+
