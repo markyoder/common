@@ -23,7 +23,7 @@ def parkfield_pca(L_r_factor=3.0):
 	d_lat = L_r_factor * L_r/111.1
 	d_lon = L_r_factor * L_r*math.cos(deg2rad*parkfield['lat'])/111.1
 	
-	print "d_lat, d_lon: ", d_lat, d_lon
+	print("d_lat, d_lon: ", d_lat, d_lon)
 	#
 	x=parkfield['lon']
 	y=parkfield['lat']
@@ -33,13 +33,13 @@ def parkfield_pca(L_r_factor=3.0):
 	#
 	# i still don't get what this does...
 	#my_pca = PCA(numpy.array(zip(cat['lon'], cat['lat'])))
-	my_pca = ptp.yoda_pca(zip(cat['lon'], cat['lat']))		# returns (eig_vals, eig_vecs)
+	my_pca = ptp.yoda_pca(list(zip(cat['lon'], cat['lat'])))		# returns (eig_vals, eig_vecs)
 	e_vals = my_pca[0]
 	e_vecs = numpy.array(my_pca[1])
 	#
 	e_vals_n = e_vals/min(e_vals)
 	#
-	print "e_vecs:", e_vecs[0][0], e_vecs[0][1], e_vecs[1][0], e_vecs[1][1]
+	print("e_vecs:", e_vecs[0][0], e_vecs[0][1], e_vecs[1][0], e_vecs[1][1])
 	circle_xy = simple_circle(x=x, y=y, r=L_r*L_r_factor/111.1)
 	#
 	# a rotational transformation:
@@ -66,7 +66,7 @@ def parkfield_pca(L_r_factor=3.0):
 	Lrx = abs(Lry*math.cos(y*deg2rad))
 	#
 	Wts = [xx/max(e_vals) for xx in e_vals]
-	print "Wts: ", Wts
+	print("Wts: ", Wts)
 	#e_vecs = e_vecs.transpose()
 	
 	
@@ -75,8 +75,8 @@ def parkfield_pca(L_r_factor=3.0):
 	
 	plt.plot([x, x + Wts[0]*Lry*e_vecs[0][0]], [y, y + Wts[0]*Lry*e_vecs[0][1]], ls='-', marker='o', color='r')
 	plt.plot([x, x + Wts[1]*Lry*e_vecs[1][0]], [y, y + Wts[1]*Lry*e_vecs[1][1]], ls='-', marker='^', color='m')
-	plt.plot(*zip(*circle_xy), ls='-', marker='', lw=2.)
-	plt.plot(*zip(*circle_xy_prime), ls='--', color='r', marker='', lw=1.5, alpha=.7, zorder=11)
+	plt.plot(*list(zip(*circle_xy)), ls='-', marker='', lw=2.)
+	plt.plot(*list(zip(*circle_xy_prime)), ls='--', color='r', marker='', lw=1.5, alpha=.7, zorder=11)
 	
 	
 	#plt.plot([x, x+Lrx*e_vecs[0][0]], [y, y + Lry*e_vecs[1][0]], ls='-', marker='o', color='r')

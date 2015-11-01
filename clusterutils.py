@@ -44,13 +44,13 @@ def findClustersSquare(gridlist=[], L=None):
 			L=squareL
 		else:
 			# we don't know how to parse it.
-			print "array width not defined."
+			print("array width not defined.")
 			return None
 	#
 	clustIndex=0
 	#
 	i=0
-	print "L=%d" % L
+	print("L=%d" % L)
 	while i<gridlen:
 		if mygridlist[i]==None or mygridlist[i]<=0:
 			clusterIDs+=[None]
@@ -94,7 +94,7 @@ def findClustersSquare(gridlist=[], L=None):
 		i+=1
 	# now, stitch together the clusters:
 	newclusts={}
-	for i in xrange(len(clustList)):
+	for i in range(len(clustList)):
 		newclusts[i]=i
 		
 	for rw in clustMap:

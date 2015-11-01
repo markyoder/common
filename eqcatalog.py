@@ -35,7 +35,7 @@ import datetime as dtm
 import pytz
 import calendar
 import operator
-import urllib
+import urllib.request, urllib.parse, urllib.error
 #
 from geographiclib.geodesic import Geodesic as ggp
 
@@ -81,7 +81,7 @@ class eqcatalog:
 		#
 		# massage data as necessary. we've recently added depth, so to be compatible with old data,
 		# run through the data and insert a 0 depth if len(cat[i])<5:
-		for i in xrange(len(self.cat)):
+		for i in range(len(self.cat)):
 			if len(self.cat[i])>=5:
 				# if one row has depth, they probably all do.
 				break
@@ -144,10 +144,10 @@ class eqcatalog:
 		for i,rw in enumerate(cat):
 			#
 			if isinstance(rw[0], numpy.datetime64) or hasattr(rw[0], 'tzinfo')==False: 
-				print 'rw[0]', rw[0]
+				print('rw[0]', rw[0])
 				cat[i][0] = mpd.num2date(mpd.datestr2num(str(rw[0])))
 				#cat[i][0] = cat[i][0].tolist()
-				print cat[i][0], type(cat[i][0])
+				print(cat[i][0], type(cat[i][0]))
 			if cat[i][0].tzinfo==None:
 				# no time-zone info. add UTC timezone.
 				dt0=cat[i][0]
@@ -163,7 +163,7 @@ class eqcatalog:
 		if thiscat==None: thiscat=self.cat
 		maxMag=thiscat[0][3]
 		maxIndex=0
-		for i in xrange(len(thiscat)):
+		for i in range(len(thiscat)):
 			#print i, maxMag, maxIndex, cat[i][3]
 			if thiscat[i][3]>maxMag:
 				maxIndex=i
@@ -269,7 +269,7 @@ class eqcatalog:
 		#vecdirs=[]	# vector directions; -1=left, 0=none, 1=right. this determines whether we want to be over or under. the first x-direction vector definds a right/left poly.
 		# get lat, lon extrema and make vectors:
 		extremeVerts=[verts[0][0], verts[0][0], verts[0][1], verts[0][1]]	# [minLon, maxLon, minLat, maxLat]
-		for i in xrange(len(verts)-1):
+		for i in range(len(verts)-1):
 			vecs+=[[verts[i], verts[i+1]]]
 			if verts[i+1][0]>extremeVerts[1]: extremeVerts[1]=verts[i+1][0]
 			if verts[i+1][0]<extremeVerts[0]: extremeVerts[0]=verts[i+1][0]
@@ -291,7 +291,7 @@ class eqcatalog:
 		# so long as we are consistent. also, as per old-school gaussian integrals, the number of times we cross a boundary: odd-> in , even -> out
 		# applies as well.
 		polycat=[]
-		for iev in xrange(len(cat)):
+		for iev in range(len(cat)):
 			event=cat[iev]
 			x=event[2]
 			y=event[1]
@@ -305,7 +305,7 @@ class eqcatalog:
 			#keepEvent=1	# start by assuming we keep the event.
 			inPolyTracker=0	# running up/down score. by default, do not keep the event.
 			#print "*#*#*#"
-			for ivec in xrange(len(vecs)):
+			for ivec in range(len(vecs)):
 				vec=vecs[ivec]
 				# make a line (if it's not vertical):
 				if vec[1][0]-vec[0][0]==0: continue	# vertical segments do not contribute, and we'll get x/0 error.
@@ -361,7 +361,7 @@ class eqcatalog:
 		vecdirs=[]	# vector directions; -1=left, 0=none, 1=right. this determines whether we want to be over or under. the first x-direction vector definds a right/left poly.
 		# get lat, lon extrema and make vectors:
 		extremeVerts=[verts[0][0], verts[0][0], verts[0][1], verts[0][1]]	# [minLon, maxLon, minLat, maxLat]
-		for i in xrange(len(verts)-1):
+		for i in range(len(verts)-1):
 			vecs+=[[verts[i], verts[i+1]]]
 			if verts[i+1][0]>extremeVerts[1]: extremeVerts[1]=verts[i+1][0]
 			if verts[i+1][0]<extremeVerts[0]: extremeVerts[0]=verts[i+1][0]
@@ -396,13 +396,13 @@ class eqcatalog:
 		# now we can spin through the catalog to find elements above/below poly segments, depending on the direction of the segment and right/left
 		# handedness of the poly.
 		polycat=[]
-		for iev in xrange(len(cat)):
+		for iev in range(len(cat)):
 			event=cat[iev]
 			x=event[2]
 			y=event[1]
 			keepEvent=1	# start by assuming we keep the event.
 			#print "*#*#*#"
-			for ivec in xrange(len(vecs)):
+			for ivec in range(len(vecs)):
 				# test the event against each polygon segment. if it falls outside one or more, don't keep it...
 				vec=vecs[ivec]
 				# make a line:
@@ -424,11 +424,11 @@ class eqcatalog:
 					smallX=vec[0][0]
 				#	
 				if (x<extremeVerts[0] or x>extremeVerts[1] or y<extremeVerts[2] or y>extremeVerts[3]):
-					print "extreme kill (%d, %d)" % (x, y)
+					print("extreme kill (%d, %d)" % (x, y))
 					keepEvent=0
 				if ((x>=smallX and x<=bigX) and ((lookUpDown==-1 and y>y0 ) or (lookUpDown==1 and y<y0))) :
 					keepEvent=0
-					print "f(x) kill (%d, %d)" % (x, y)
+					print("f(x) kill (%d, %d)" % (x, y))
 					# and for efficiency:
 					continue
 				#
@@ -436,7 +436,7 @@ class eqcatalog:
 			if keepEvent==1: polycat+=[event]
 		
 			
-		print extremeVerts
+		print(extremeVerts)
 		return polycat
 			
 		
@@ -534,7 +534,7 @@ class eqcatalog:
 		#newcat=self.getTimeRangeCat(fullcat, dts[0], dts[1])
 		#newcat=self.getLatLonSubcat(newcat, lats, lons, llcols)
 		newcat=[]
-		print lats, lons, dts
+		print(lats, lons, dts)
 		for rw in fullcat:
 			if rw[llmcols[0]]>=lats[0] and rw[llmcols[0]]<=lats[1] and rw[llmcols[1]]>=lons[0] and rw[llmcols[1]]<=lons[1] and rw[llmcols[2]]>=minmag and rw[0]>=dts[0] and rw[0]<=dts[1]:
 				newcat+=[rw]
@@ -570,7 +570,7 @@ class eqcatalog:
 		catmap.drawcoastlines(color='gray')
 		catmap.drawcountries(color='gray')
 		catmap.fillcontinents(color='beige')
-		xfull, yfull=catmap(map(operator.itemgetter(2), catalog), map(operator.itemgetter(1), catalog))
+		xfull, yfull=catmap(list(map(operator.itemgetter(2), catalog)), list(map(operator.itemgetter(1), catalog)))
 		#epx, epy=catmap(epicenter[0], epicenter[1])
 		catmap.plot(xfull, yfull, dots, label='Full Catalog')
 		#catmap.plot(epx, epy, 'ro')
@@ -589,8 +589,8 @@ class eqcatalog:
 
 		#catalogs=[self.cat] + map(operator.itemgetter(1), self.subcats)
 		#catnames=[maincatname] + map(operator.itemgetter(0), self.subcats)
-		catalogs=map(operator.itemgetter(1), catalogses)
-		catnames=map(operator.itemgetter(0), catalogses)
+		catalogs=list(map(operator.itemgetter(1), catalogses))
+		catnames=list(map(operator.itemgetter(0), catalogses))
 		#return [catalogs, catnames]
 		catalog=catalogs[0]
 		
@@ -615,12 +615,12 @@ class eqcatalog:
 		llr[1][1]+= latpad	#.5
 		#if llr[1][1]>180.: llr[1][1]=180.
 		
-		print "setting up map prams"
+		print("setting up map prams")
 		
 		cntr=[float(llr[0][0])+(llr[1][0]-float(llr[0][0]))/2.0, float(llr[0][1])+(llr[1][1]-float(llr[0][1]))/2.0]
-		print "create basmap object."
+		print("create basmap object.")
 		catmap=Basemap(llcrnrlon=llr[0][1], llcrnrlat=llr[0][0], urcrnrlon=llr[1][1], urcrnrlat=llr[1][0], resolution =self.mapres, projection='tmerc', lon_0=cntr[1], lat_0=cntr[0])
-		print "bm object created..."
+		print("bm object created...")
 		canvas=FigureCanvas(f0)
 		catmap.ax=f0.add_axes([0,0,1,1])
 		#f0.set_figsize_inches((8/catmap.aspect,8.))
@@ -629,14 +629,14 @@ class eqcatalog:
 		#f0.set_size_inches((10/catmap.aspect,10.))
 		f0.set_size_inches((10.,15.))
 		#
-		print "draw stuff on map..."
+		print("draw stuff on map...")
 		catmap.drawcoastlines(color='gray', zorder=0)
 		catmap.drawcountries(color='gray', zorder=0)
 		catmap.fillcontinents(color='beige', zorder=0)
 		#catmap.drawrivers(color='b')
 		catmap.drawstates()
-		catmap.drawmeridians(range(int(llr[0][1]-2.0), int(llr[1][1]+2.0)), color='k', labels=[1,1,1,1])
-		catmap.drawparallels(range(int(llr[0][0]-2.0), int(llr[1][0]+2.0)), color='k', labels=[1, 1, 1, 1])
+		catmap.drawmeridians(list(range(int(llr[0][1]-2.0), int(llr[1][1]+2.0))), color='k', labels=[1,1,1,1])
+		catmap.drawparallels(list(range(int(llr[0][0]-2.0), int(llr[1][0]+2.0))), color='k', labels=[1, 1, 1, 1])
 		#
 		'''
 		catmap.llcrnrlon=llr[0][1]+2.0
@@ -644,10 +644,10 @@ class eqcatalog:
 		catmap.urcrnrlon=llr[1][1]-2.0
 		catmap.urcrnrlat=llr[1][0]-2.0
 		'''
-		print "plot catalogs..."
+		print("plot catalogs...")
 		icat=0
 		for ct in catalogs:
-			xfull, yfull=catmap(map(operator.itemgetter(2), ct), map(operator.itemgetter(1), ct))
+			xfull, yfull=catmap(list(map(operator.itemgetter(2), ct)), list(map(operator.itemgetter(1), ct)))
 			catmap.plot(xfull, yfull, '.', label='%s' % catnames[icat], ms=2, zorder=1, alpha=.5)
 			icat+=1
 		
@@ -721,16 +721,16 @@ class eqcatalog:
 		# permit custom lat/lon range.
 		if mapLLlat!=None: 
 			llr[0][0]=mapLLlat
-			print "setting LL lat ", mapLLlat
+			print("setting LL lat ", mapLLlat)
 		if mapLLlon!=None: 
 			llr[0][1]=mapLLlon
-			print "setting LL lon ", mapLLlon
+			print("setting LL lon ", mapLLlon)
 		if mapURlat!=None: 
 			llr[1][0]=mapURlat
-			print "setting UR lat: ", mapURlat
+			print("setting UR lat: ", mapURlat)
 		if mapURlon!=None: 
 			llr[1][1]=mapURlon
-			print "setting UR lon: ", mapURlon
+			print("setting UR lon: ", mapURlon)
 		#
 		#llr=self.getLatLonRange(catalog)	# latLonRange #return [[minLat, minLon], [maxLat, maxLon]]
 		#llr = [[self.catmap.llcrnrlat, self.catmap.llcrnrlon],[self.catmap.urcrnrlat, self.catmap.urcrnrlon]]
@@ -777,7 +777,7 @@ class eqcatalog:
 			catmap.drawmeridians(theseLons, color='k', labels=meridian_labels)
 		#
 		if plotevents:
-			xfull, yfull=catmap(map(operator.itemgetter(2), catalog), map(operator.itemgetter(1), catalog))
+			xfull, yfull=catmap(list(map(operator.itemgetter(2), catalog)), list(map(operator.itemgetter(1), catalog)))
 			epx, epy=catmap(epicenter[0], epicenter[1])
 			#catmap.plot(xfull, yfull, 'b,', label='Full Catalog')
 			catmap.plot(xfull, yfull, eqicon, label='earthquakes', alpha=.5, zorder=2)
@@ -805,7 +805,7 @@ class eqcatalog:
 	#
 	def getTargMag(self, m, mc=None, mt=7.6):
 		if mc==None:
-			mc=min(map(operator.itemgetter(3), self.getcat()))
+			mc=min(list(map(operator.itemgetter(3), self.getcat())))
 		if mt==None: mt=self.mt
 		if m<mt:
 			# "small" earthquake
@@ -827,7 +827,7 @@ class eqcatalog:
 		#
 		if mc==None:
 			# let's just guess that the catalog was selected with a valid mc...
-			mc=min(map(operator.itemgetter(3), self.cat, 3))
+			mc=min(list(map(operator.itemgetter(3), self.cat, 3)))
 		if targmag!=None:
 			# estimate winlen from a target magnitude.
 			mt=self.mt
@@ -856,7 +856,7 @@ class eqcatalog:
 		if rbavelen==None:
 			rbavelen=int(winlen/10.)
 			if rbavelen==0: rbavelen=1
-		print "avelen: %d" % rbavelen
+		print("avelen: %d" % rbavelen)
 		#
 		if mapcatnum==None: mapcatnum=catnum
 		if logZ==None:
@@ -997,7 +997,7 @@ class eqcatalog:
 			thisAx=plt.gca()
 		#
 		#if len(ratios[0])<6: ratios[0]+=[ratios[0][4]]
-		for i in xrange(1,len(ratios)+1):
+		for i in range(1,len(ratios)+1):
 			# "i" is the index of the next entry, like subset = fullset[(i-len):i], returning up to the (i-1)th entry.
 			if len(ratios[i-1])>=6:
 				#ratios[i-1]=ratios[i-1][:-1]	# remove mean value entry and recalculate (just in case we've changed something).
@@ -1007,17 +1007,17 @@ class eqcatalog:
 			#
 			i0=max(0, i-avlen)	# early entries we average over what we've got so far.
 			#theseRs=map(math.log10, map(operator.itemgetter(4), ratios[i0:i]))
-			theseRs = map(operator.itemgetter(4), ratios[i0:i])		# note: returning through the (i-1)th entry, hence i -> len()+1.
+			theseRs = list(map(operator.itemgetter(4), ratios[i0:i]))		# note: returning through the (i-1)th entry, hence i -> len()+1.
 			#ratios[i-1]+=[scipy.mean(theseRs)]
 			ratios[i-1]+=[scipy.prod(theseRs)**(1.0/len(theseRs))]	# ... and this mean value corresponds to the (i-1)th entry.
 			#
 		#thisAx.set_yscale('log')
-		X = map(operator.itemgetter(1), ratios)
-		Y = map(operator.itemgetter(-1), ratios)
+		X = list(map(operator.itemgetter(1), ratios))
+		Y = list(map(operator.itemgetter(-1), ratios))
 		X2,Y2 = self.zeroFillInts(X,Y)
 		Ythresh = hitThreshold*scipy.ones(len(Y2))
-		Ygt = map(scipy.greater_equal, Y2, Ythresh)	# scipy.greater_equal(), scipy.greter()?
-		Ylt = map(scipy.less_equal,  Y2, Ythresh)
+		Ygt = list(map(scipy.greater_equal, Y2, Ythresh))	# scipy.greater_equal(), scipy.greter()?
+		Ylt = list(map(scipy.less_equal,  Y2, Ythresh))
 		#
 		thisAx.set_yscale('log')
 		#print "xylen: %d, %d" % (len(X), len(Y))
@@ -1049,7 +1049,7 @@ class eqcatalog:
 			thisAx=plt.gca()
 		#
 		#if len(ratios[0])<6: ratios[0]+=[ratios[0][4]]
-		for i in xrange(1,len(ratios)+1):
+		for i in range(1,len(ratios)+1):
 			# "i" is the index of the next entry, like subset = fullset[(i-len):i], returning up to the (i-1)th entry.
 			if len(ratios[i-1])>5:
 				#ratios[i-1]=ratios[i-1][:-1]	# remove mean value entry and recalculate (just in case we've changed something).
@@ -1059,7 +1059,7 @@ class eqcatalog:
 			#
 			i0=max(0, i-avlen)	# early entries we average over what we've got so far.
 			#theseRs=map(math.log10, map(operator.itemgetter(4), ratios[i0:i]))
-			theseRs = map(operator.itemgetter(4), ratios[i0:i])		# note: returning through the (i-1)th entry, hence i -> len()+1.
+			theseRs = list(map(operator.itemgetter(4), ratios[i0:i]))		# note: returning through the (i-1)th entry, hence i -> len()+1.
 			#ratios[i-1]+=[scipy.mean(theseRs)]
 			ratios[i-1]+=[scipy.prod(theseRs)**(1.0/len(theseRs))]	# ... and this (geometric) mean value corresponds to the (i-1)th entry.
 			#
@@ -1067,8 +1067,8 @@ class eqcatalog:
 		#
 		# the weighted fit will be log(r)/chi_sqr
 		#
-		X = map(operator.itemgetter(1), ratios)
-		Y0 = map(operator.itemgetter(-1), ratios)
+		X = list(map(operator.itemgetter(1), ratios))
+		Y0 = list(map(operator.itemgetter(-1), ratios))
 		chi_sqrs=self.get_ratio_fits(ratios=ratios, fitlen=avlen, x_col=1, y_col=5)
 		#
 		# and let's use the std-dev, not the var so numbers don't explode so badly (should not make a huge difference).
@@ -1089,8 +1089,8 @@ class eqcatalog:
 		#return [X, Y, Y0, chi_sqrs]
 		X2,Y2 = self.zeroFillInts(X,Y, dolog=False)
 		Ythresh = hitThreshold*scipy.ones(len(Y2))
-		Ygt = map(scipy.greater_equal, Y2, Ythresh)	# scipy.greater_equal(), scipy.greter()?
-		Ylt = map(scipy.less_equal,  Y2, Ythresh)
+		Ygt = list(map(scipy.greater_equal, Y2, Ythresh))	# scipy.greater_equal(), scipy.greter()?
+		Ylt = list(map(scipy.less_equal,  Y2, Ythresh))
 		#
 		thisAx.set_yscale('log')
 		#print "xylen: %d, %d" % (len(X), len(Y))
@@ -1108,7 +1108,7 @@ class eqcatalog:
 		Y=scipy.array(Y0).copy().tolist()
 		if type(X0[0])!=float:
 			# this is a little bit sloppy, but it will do for now.
-			X=map(mpd.date2num, X0)
+			X=list(map(mpd.date2num, X0))
 		#
 		i=1
 		while i<len(X):
@@ -1150,15 +1150,15 @@ class eqcatalog:
 		#
 		chi_sqrs=[]	# and note that this will return a set shorter than the input.
 		#
-		r_vals = map(operator.itemgetter(y_col), ratios)
-		X_vals = map(operator.itemgetter(x_col), ratios)
+		r_vals = list(map(operator.itemgetter(y_col), ratios))
+		X_vals = list(map(operator.itemgetter(x_col), ratios))
 		#
 		if type(X_vals[0])==type(dtm.datetime.now()):
-			X_vals = map(mpd.date2num, X_vals)
+			X_vals = list(map(mpd.date2num, X_vals))
 		#
-		for i in xrange(3,len(ratios)):
+		for i in range(3,len(ratios)):
 			# ... and we fit the logs of the inputs (linearized values)...
-			these_r = map(math.log10, r_vals[max(0, (i-fitlen)):i])
+			these_r = list(map(math.log10, r_vals[max(0, (i-fitlen)):i]))
 			#if type(X_vals[0])==type(dtm.datetime.now()):
 			#	these_x = map(mpd.date2num, X_vals[(i-n):i])
 			#else:
@@ -1191,7 +1191,7 @@ class eqcatalog:
 	#
 	#
 	def testMap(self):
-		import cPickle
+		import pickle
 		import time
 		#
 		fig=plt.figure()
@@ -1206,20 +1206,20 @@ class eqcatalog:
 		urlat=42
 		lon0=lllon + (urlon-lllon)/2.0
 		lat0=lllat + (urlat-urlat)/2.0
-		print "center: %f, %f" % (lon0, lat0)
+		print("center: %f, %f" % (lon0, lat0))
 		m = Basemap(llcrnrlon=lllon, llcrnrlat=lllat, urcrnrlon=urlon, urcrnrlat=urlat, resolution=self.mapres, projection='tmerc', lon_0=lon0, lat_0=lat0)
 		m.drawcountries()
 		m.drawrivers()
-		print time.clock()-t1,' secs to create original Basemap instance'
+		print(time.clock()-t1,' secs to create original Basemap instance')
 
 		# cPickle the class instance.
-		cPickle.dump(m,open('map.pickle','wb'),-1)
+		pickle.dump(m,open('map.pickle','wb'),-1)
 
 		# clear the figure
 		plt.clf()
 		# read cPickle back in and plot it again (should be much faster).
 		t1 = time.clock()
-		m2 = cPickle.load(open('map.pickle','rb'))
+		m2 = pickle.load(open('map.pickle','rb'))
 		# draw coastlines and fill continents.
 		m.drawcoastlines()
 		# fill continents and lakes
@@ -1231,7 +1231,7 @@ class eqcatalog:
 		m.drawmapboundary(fill_color='aqua')
 		# draw major rivers.
 		m.drawrivers(color='b')
-		print time.clock()-t1,' secs to plot using using a pickled Basemap instance'
+		print(time.clock()-t1,' secs to plot using using a pickled Basemap instance')
 		# draw parallels
 		circles = np.arange(48,65,2).tolist()
 		m.drawparallels(circles,labels=[1,1,0,0])
@@ -1320,10 +1320,10 @@ class eqcatalog:
 		
 	def plotGRdist(self, mags=None, doShow=True, fname='GRdist.png', plotTitle="Magnitude Distribution", fignum=0):
 		# mags: a 1D array of magnitudes
-		if mags==None: mags=map(operator.itemgetter(3), self.cat)
+		if mags==None: mags=list(map(operator.itemgetter(3), self.cat))
 		# if mags rows are not scalar, assume a full standard type catalog has been passed.
 		try:
-			if len(mags[0])>=3: mags=map(operator.itemgetter(3), mags)
+			if len(mags[0])>=3: mags=list(map(operator.itemgetter(3), mags))
 		except TypeError:
 			# a list of scalars will throw a "can't get len." error. we should be able to skip without doing anything at all.
 			# maybe a better approach is to test the type of mags[0] for list or tuple...
@@ -1338,7 +1338,7 @@ class eqcatalog:
 		
 		if doShow==True or fname!=None:
 			# make a plot and show and/or save
-			Y=range(1, len(mags)+1)
+			Y=list(range(1, len(mags)+1))
 			Y.reverse()
 			#Y=frange(1, len(mags)+1, -1)
 			#print Y
@@ -1362,8 +1362,8 @@ class eqcatalog:
 		# let's get fancy and allow for the list to be reverse-sorted.
 		# and in fact, let's sacrifice a bit of speed to be sure we're getting a sorted list.
 		# we only need the dates...
-		event_dates=map(operator.itemgetter(0), catList)
-		mylist=map(mpd.date2num, event_dates)	# float type in units of "days"
+		event_dates=list(map(operator.itemgetter(0), catList))
+		mylist=list(map(mpd.date2num, event_dates))	# float type in units of "days"
 		mylist.sort()	# now in ascending order...
 		mylist=scipy.array(mylist)
 		intervals=mylist[interval_length:]-mylist[0:-interval_length]
@@ -1394,9 +1394,9 @@ class eqcatalog:
 		#imax=len(intervals)
 		#while i<imax:
 		#print intervals[0:10]
-		for i in xrange(winlen, len(intervals)):
+		for i in range(winlen, len(intervals)):
 			#print "***", intervals[(i-winlen): i]
-			thisX=map(operator.itemgetter(1), intervals[i-winlen:i])
+			thisX=list(map(operator.itemgetter(1), intervals[i-winlen:i]))
 			thisrbdata=self.getnrbs(thisX, reverse=reverse)
 			# like: [xmax, xmin, nbigger, nsmaller]
 			r=(thisrbdata[0]/float(thisrbdata[1]))
@@ -1424,7 +1424,7 @@ class eqcatalog:
 			#
 		if reverse==True:
 			xmax, xmin = X[-1], X[-1]
-			for i in xrange(2, len(X)+1):
+			for i in range(2, len(X)+1):
 				x=X[-i]
 				# the first element is everybody's record-breaking event...
 				if x>xmax:
@@ -1570,7 +1570,7 @@ class eqcatalog:
 			activecat+=[rw]
 		mags=vlinePadList(mags, minmag-abs(minmag)*.1)	# return the mags data padded for vertical line style plotting. this is just a trick to get width=1 histograms.
 		#
-		ax0.plot_date(map(operator.itemgetter(0), mags), map(operator.itemgetter(1), mags), '-')
+		ax0.plot_date(list(map(operator.itemgetter(0), mags)), list(map(operator.itemgetter(1), mags)), '-')
 		shockints=[]
 		
 		#print "plotdates: %s" % str(plotDates)
@@ -1587,10 +1587,10 @@ class eqcatalog:
 			#
 			#plt.plot(map(operator.itemgetter(0), shockints[-1]), scipy.array(map(operator.itemgetter(1), shockints[-1]))/float(wlen), '-', label='winLen=%d' % wlen)
 			#
-			X=map(operator.itemgetter(0), shockints[-1])
+			X=list(map(operator.itemgetter(0), shockints[-1]))
 			# pylab.date2num(dtm)
 			#XX=date2num(X)
-			ax1.plot(X, scipy.array(map(operator.itemgetter(1), shockints[-1]))/float(wlen), '-', label='$N=%d$' % wlen, lw=1.0)
+			ax1.plot(X, scipy.array(list(map(operator.itemgetter(1), shockints[-1])))/float(wlen), '-', label='$N=%d$' % wlen, lw=1.0)
 			#ax1.semilogy(map(operator.itemgetter(0), shockints[-1]), scipy.array(map(operator.itemgetter(1), shockints[-1]))/float(wlen), '-', label='winLen=%d' % wlen)
 			# fg.autofmt_xdate()
 			
@@ -1617,7 +1617,7 @@ class eqcatalog:
 		try:
 			if minmag==None: minmag=self.minmag
 		except:
-			if minmag==None: minmag=min(map(operator.itemgetter(3), catalog))
+			if minmag==None: minmag=min(list(map(operator.itemgetter(3), catalog)))
 		#
 		cols=dtmlatlonmagCols	# for efficient notation
 		activecat=[]
@@ -1631,7 +1631,7 @@ class eqcatalog:
 			while (plotDates[1]!=None and plotDates[1]<shockints[-1][0][0]): a=shockints[-1].pop(0)
 			while plotDates[0]!=None and plotDates[0]>shockints[-1][-1][0]: a=shockints[-1].pop()
 			#
-			ax.plot(map(operator.itemgetter(0), shockints[-1]), scipy.array(map(operator.itemgetter(1), shockints[-1]))/float(wlen), '-', label='$N=%d$' % wlen, lw=thislw)
+			ax.plot(list(map(operator.itemgetter(0), shockints[-1])), scipy.array(list(map(operator.itemgetter(1), shockints[-1])))/float(wlen), '-', label='$N=%d$' % wlen, lw=thislw)
 			#ax1.semilogy(map(operator.itemgetter(0), shockints[-1]), scipy.array(map(operator.itemgetter(1), shockints[-1]))/float(wlen), '-', label='winLen=%d' % wlen)
 			
 		

@@ -31,7 +31,7 @@ import datetime as dtm
 import pytz
 import calendar
 import operator
-import urllib
+import urllib.request, urllib.parse, urllib.error
 
 import rbIntervals as rbi
 
@@ -79,15 +79,15 @@ class linefit:
 			if len(inData[0])==1:
 				# 1D array; assume a plain ole sequence for X
 				self.datas=[]
-				self.datas+=[range(len(inData))]
-				self.datas+=[map(operator.itemgetter(0), inData)]
+				self.datas+=[list(range(len(inData)))]
+				self.datas+=[list(map(operator.itemgetter(0), inData))]
 			if len(inData[0])>=2:
 				# assume the data are ordered pairs, so we can sort them on the x coordinate.
 				inData.sort(key=operator.itemgetter(0))
 				self.datas=[]
-				self.datas+=[map(operator.itemgetter(0), inData)]
-				self.datas+=[map(operator.itemgetter(1), inData)]
-			if len(inData[0])>=3: self.datas+=[map(operator.itemgetter(2), inData)]
+				self.datas+=[list(map(operator.itemgetter(0), inData))]
+				self.datas+=[list(map(operator.itemgetter(1), inData))]
+			if len(inData[0])>=3: self.datas+=[list(map(operator.itemgetter(2), inData))]
 		if len(self.datas)==2:
 			# add even weight.
 			self.datas+=[[]]
@@ -123,7 +123,7 @@ class linefit:
 		X=[]
 		Y=[]
 		W=[]
-		for i in xrange(len(self.datas[0])):
+		for i in range(len(self.datas[0])):
 			if self.datas[0][i]<xmin: continue
 			#
 			X+=[self.datas[0][i]]
@@ -137,7 +137,7 @@ class linefit:
 		#print "do the fit..."
 		# note: args are (y, x, wt)
 		#plsq=spo.leastsq(self.linRes, p, args=(scipy.array(self.datas[1]), scipy.array(self.datas[0]), scipy.array(self.datas[2])), full_output=1)
-		print "prams: %s" % str(p)
+		print(("prams: %s" % str(p)))
 		#plsq=spo.leastsq(fitres, p, args=(scipy.array(Y), scipy.array(X), scipy.array(W), r0), full_output=1)
 		plsq=spo.leastsq(fitres, p, args=(scipy.array(Y), scipy.array(X), scipy.array(W)), full_output=1)
 		#print "fit done. sum error..."
@@ -163,7 +163,7 @@ class linefit:
 		logdatas=[[], [], []]
 		#
 		# get logarithms of data:
-		for i in xrange(len(thisdatas[0])):
+		for i in range(len(thisdatas[0])):
 			logdatas[0]+=[math.log(thisdatas[0][i], lbase)]
 			logdatas[1]+=[math.log(thisdatas[1][i], lbase)]
 			wt=1
@@ -201,7 +201,7 @@ class linefit:
 		Y=[]
 		W=[]
 		#
-		for i in xrange(len(thisdatas[0])):
+		for i in range(len(thisdatas[0])):
 			#if thisdatas[0][i]<xmin: continue
 			#
 			X+=[thisdatas[0][i]]
@@ -270,7 +270,7 @@ class linefit:
 	def tofile(self, fname='data/lfdata.dat', lfheader='#data from linefit object\n'):
 		fout=open(fname, 'w')
 		fout.write(lfheader)
-		for i in xrange(len(self.datas[0])):
+		for i in range(len(self.datas[0])):
 			fout.write('%f\t%f\t%f\n' % (self.datas[0][i], self.datas[1][i], self.datas[2][i]))
 		fout.close()
 	
@@ -310,7 +310,7 @@ class linefit:
 		return err
 	
 	def getFitPlotAry(self):
-		print "from getFitPlotAry(): %s, %s, %s, %s" % (self.datas[0][0], self.datas[0][-1], self.a, self.b)
+		print(("from getFitPlotAry(): %s, %s, %s, %s" % (self.datas[0][0], self.datas[0][-1], self.a, self.b)))
 		Fx=[self.datas[0][0], self.datas[0][-1]]
 		Fy=[self.datas[0][0]*self.b + self.a, self.datas[0][-1]*self.b + self.a]
 		return [Fx, Fy]

@@ -62,7 +62,7 @@ def gr_thing(lats=[31., 43.], lons=[-126., -114.], mc=3.0, t0=dtm.datetime(1990,
 		these_mags = sorted(cat['mag'][m_index[j][0]+1:rw[0]].copy())
 		#
 		if len(these_mags)<2:
-			print "insufficient sequence length: %d" % len(these_mags)
+			print("insufficient sequence length: %d" % len(these_mags))
 			continue
 		#
 		these_mags.reverse()
@@ -86,7 +86,7 @@ def gr_thing(lats=[31., 43.], lons=[-126., -114.], mc=3.0, t0=dtm.datetime(1990,
 		#print "len[%d]: (%d/%d:%f): %d " % (j, m_index[j][0], rw[0], rw[1], len(these_mags))
 		#
 		fits = numpy.linalg.lstsq(numpy.array([[m,1.0] for m in these_mags]), numpy.log10(Ns))[0]
-		print "fits: ", fits[0]
+		print("fits: ", fits[0])
 		abmag += [[fits[1], fits[0], m_index[j][1], rw[1]]]
 		#
 		my_axes[2].plot([m_index[j][1], rw[1]], [fits[1], fits[1]], 'o-', color=this_color)
@@ -96,7 +96,7 @@ def gr_thing(lats=[31., 43.], lons=[-126., -114.], mc=3.0, t0=dtm.datetime(1990,
 		#my_axes[3].plot([fits[0]], [rw[1]], 'o', color=this_color)
 		
 	#
-	print "b-values:\n median: %f, mean: %f \\pm %f" % (numpy.median([rw[1] for rw in abmag]), numpy.mean([rw[1] for rw in abmag]), numpy.std([rw[1] for rw in abmag]))
+	print("b-values:\n median: %f, mean: %f \\pm %f" % (numpy.median([rw[1] for rw in abmag]), numpy.mean([rw[1] for rw in abmag]), numpy.std([rw[1] for rw in abmag])))
 	#
 	plt.figure(2)
 	#plt.clf()
@@ -113,6 +113,6 @@ def gr_thing(lats=[31., 43.], lons=[-126., -114.], mc=3.0, t0=dtm.datetime(1990,
 	ax_bcdf = my_axes[3].twiny()
 	bs = [rw[1] for rw in abmag]
 	bs.sort()
-	ax_bcdf.plot(xrange(1,len(bs)+1), bs, 's-', lw=2, alpha=.7)
+	ax_bcdf.plot(range(1,len(bs)+1), bs, 's-', lw=2, alpha=.7)
 	ax_bcdf.set_ylabel('$N<b$')
 	

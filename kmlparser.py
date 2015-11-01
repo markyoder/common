@@ -20,7 +20,7 @@ def add_kmlstyle(stylename="redsies"):
       '</Style>\n'
 
 	elif stylename=='redsies':
-		print "doing redsies."
+		print("doing redsies.")
 		strStyle= \
 		'<Style id="redsies">\n'\
       ' <LineStyle>\n'\
@@ -33,7 +33,7 @@ def add_kmlstyle(stylename="redsies"):
       '</Style>\n'
 
 	elif stylename=='redbg':
-		print "doing redbg"
+		print("doing redbg")
 		strStyle= \
 		'<Style id="redbg">\n'\
       ' <LineStyle>\n'\
