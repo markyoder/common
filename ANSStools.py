@@ -3,8 +3,19 @@ import matplotlib.dates as mpd
 import pytz
 import calendar
 import operator
-import urllib.request, urllib.parse, urllib.error
-import urllib.request, urllib.error, urllib.parse
+try:
+	# should work with python 3.x
+	import urllib.request, urllib.parse, urllib.error
+except:
+	print("could not load: urllib.request, urllib.parse, urllib.error.\n probably Python 2.x?")
+
+try:
+	import urllib
+	import ullib2
+except:
+	print("failed while loading urllib and/or urllib2. maybe python 3.x?")
+	
+#import urllib.request, urllib.error, urllib.parse
 import requests
 import numpy
 #
