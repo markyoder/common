@@ -25,9 +25,9 @@ def parkfield_pca(L_r_factor=3.0):
 	
 	print("d_lat, d_lon: ", d_lat, d_lon)
 	#
-	x=parkfield['lon']
-	y=parkfield['lat']
-	parkfield_cat_prams = {'lon':[x-d_lon, x+d_lon], 'lat':[y-d_lat, y+d_lon], 'minMag':1.5, 'dates0':[dtm.datetime(2004,9,28, tzinfo=pytz.timezone('UTC')), dtm.datetime(2010,9,28, tzinfo=pytz.timezone('UTC'))], 'Nmax':None, 'fout':None, 'rec_array':True}
+	x_pf=parkfield['lon']
+	y_pf=parkfield['lat']
+	parkfield_cat_prams = {'lon':[x_pf-d_lon, x_pf+d_lon], 'lat':[y_pf-d_lat, y_pf+d_lon], 'minMag':1.5, 'dates0':[dtm.datetime(2004,9,28, tzinfo=pytz.timezone('UTC')), dtm.datetime(2010,9,28, tzinfo=pytz.timezone('UTC'))], 'Nmax':None, 'fout':None, 'rec_array':True}
 	#
 	cat = atp.catfromANSS(**parkfield_cat_prams)
 	#
@@ -37,33 +37,53 @@ def parkfield_pca(L_r_factor=3.0):
 	e_vals = my_pca[0]
 	e_vecs = numpy.array(my_pca[1])
 	#
-	e_vals_n = e_vals/min(e_vals)
+	#e_vals_n = e_vals/min(e_vals)
+	e_vals_n = numpy.array([min(4.0, x/min(e_vals)) for x in e_vals])
 	#
 	print("e_vecs:", e_vecs[0][0], e_vecs[0][1], e_vecs[1][0], e_vecs[1][1])
 	circle_xy = simple_circle(x=x, y=y, r=L_r*L_r_factor/111.1)
+
+	#T = numpy.array([[e_vals_n[j]*x for x in rw] for j,rw in enumerate(e_vecs)])
+	#circle_xy_prime = numpy.dot(circle_xy,T.transpose())	# note: this syntax will add [x,y] to all members of circle_xy_prime like [[a+x,b+y], [a+x,b+y],...]
+	
+	T = numpy.dot([[e_vals_n[0],0.],[0., e_vals_n[1]]], e_vecs)
+	circle_xy_prime = numpy.dot(circle_xy, T)
+	
+	#circle_xy_prime = numpy.dot(circle_xy, [[e_vals_n[0],0.],[0., e_vals_n[1]]])
+	#circle_xy_prime = numpy.dot(circle_xy_prime, e_vecs)
+	
+	#circle_xy = numpy.array(circle_xy)+numpy.array([x,y])
+	circle_xy_prime = [[j+x_pf, k+y_pf] for j,k in circle_xy_prime]
+	circle_xy = [[j+x_pf, k+y_pf] for j,k in circle_xy]
+	#print "T: ", T
 	#
 	# a rotational transformation:
 	#  elliptical distribution; a = r, b = {something < a}. this is distinct from the equal-area transform, in which a>r.
 	#  note that for this transform, the initial rate-density is adjusted to the new (surface projection) area.
-	mu_x, mu_y = [numpy.mean(col) for col in zip(*circle_xy)]
+	#mu_x, mu_y = [numpy.mean(col) for col in zip(*circle_xy)]
 	#print "means: ", mu_x, mu_y
-	#circle_xy_prime = numpy.dot([[rw[0]-mu_x, rw[1]-mu_y] for rw in circle_xy], e_vecs_prime)
-	circle_xy_prime = [[rw[0]-mu_x, rw[1]-mu_y] for rw in circle_xy]
+	#circle_xy_prime = [[rw[0]-mu_x, rw[1]-mu_y] for rw in circle_xy]
 	#
-	circle_xy_prime = [[numpy.dot(rw,e_vecs[0])*e_vals_n[0], numpy.dot(rw, e_vecs[1])*e_vals_n[1]] for rw in circle_xy_prime]
+	#circle_xy_prime = [[numpy.dot(rw,e_vecs[0])*e_vals_n[0], numpy.dot(rw, e_vecs[1])*e_vals_n[1]] for rw in circle_xy_prime]
 	#circle_xy_prime = numpy.dot([[rw[0] + mu_x, rw[1]+mu_y] for rw in circle_xy_prime], zip(*e_vecs))
 	#circle_xy_prime = numpy.dot(circle_xy_prime, e_vecs.transpose())
-	circle_xy_prime = numpy.dot(circle_xy_prime, e_vecs)
-	circle_xy_prime = [[j+mu_x, k+mu_y] for j,k in circle_xy_prime]
+	#circle_xy_prime = numpy.dot(circle_xy_prime, e_vecs)
+	#circle_xy_prime = [[j+mu_x, k+mu_y] for j,k in circle_xy_prime]
 
 	#circle_xy_prime = numpy.dot(circle_xy_prime, zip(*e_vecs))
 	#
 	plt.figure(0)
 	plt.clf()
-	plt.plot(cat['lon'], cat['lat'], '.')
-	plt.plot([x], [y], 'r*', ms=15)
+	plt.plot(cat['lon'], cat['lat'], '.', label='parkfield cat')
+	plt.plot([x_pf], [y_pf], 'r*', ms=15)
+	plt.legend(loc=0, numpoints=1)
+	#
+	plot_axes = (L_r/111.2)*numpy.array([e_vecs[0], [0.,0.], e_vecs[1]]) + numpy.array([x_pf, y_pf])
+	plt.plot(*zip(*plot_axes), ls='-', marker='o')
+	#
 	Lry = abs(L_r_factor * L_r/111.1)
-	Lrx = abs(Lry*math.cos(y*deg2rad))
+	Lrx = abs(Lry*math.cos(y_pf*deg2rad))
+	
 	#
 	Wts = [xx/max(e_vals) for xx in e_vals]
 	print("Wts: ", Wts)
@@ -73,11 +93,21 @@ def parkfield_pca(L_r_factor=3.0):
 	#plt.plot([x, x + Lrx*e_vecs[0][0]], [y, y + Lry*e_vecs[0][1]], ls='-', marker='o', color='r')
 	#plt.plot([x, x + Lrx*e_vecs[1][0]], [y, y + Lry*e_vecs[1][1]], ls='-', marker='^', color='m')
 	
+	'''
+	#<<<<<<< HEAD
 	plt.plot([x, x + Wts[0]*Lry*e_vecs[0][0]], [y, y + Wts[0]*Lry*e_vecs[0][1]], ls='-', marker='o', color='r')
 	plt.plot([x, x + Wts[1]*Lry*e_vecs[1][0]], [y, y + Wts[1]*Lry*e_vecs[1][1]], ls='-', marker='^', color='m')
 	plt.plot(*list(zip(*circle_xy)), ls='-', marker='', lw=2.)
 	plt.plot(*list(zip(*circle_xy_prime)), ls='--', color='r', marker='', lw=1.5, alpha=.7, zorder=11)
+	#=======
+	'''
+	#ax1 = numpy.dot(
 	
+	plt.plot([x_pf, x_pf + Wts[0]*Lry*e_vecs[0][0]], [y_pf, y_pf + Wts[0]*Lry*e_vecs[0][1]], ls='-', marker='o', color='r')
+	plt.plot([x_pf, x_pf + Wts[1]*Lry*e_vecs[1][0]], [y_pf, y_pf + Wts[1]*Lry*e_vecs[1][1]], ls='-', marker='^', color='m')
+	
+	plt.plot(*zip(*circle_xy), ls='-', marker='', lw=2.)
+	plt.plot(*zip(*circle_xy_prime), ls='--', color='r', marker='', lw=1.5, alpha=.7, zorder=11)	
 	
 	#plt.plot([x, x+Lrx*e_vecs[0][0]], [y, y + Lry*e_vecs[1][0]], ls='-', marker='o', color='r')
 	#plt.plot([x, x+Lrx*e_vecs[0][1]], [y, y + Lry*e_vecs[1][1]], ls='-', marker='^', color='m')
@@ -86,8 +116,13 @@ def parkfield_pca(L_r_factor=3.0):
 	plt.clf()
 	#plt.plot([0., Lrx*e_vecs[0][0]], [0., Lry*e_vecs[0][1]], '.-')
 	#plt.plot([0., Lrx*e_vecs[1][0]], [0., Lry*e_vecs[1][1]], '.--')
-	plt.plot([0., e_vecs[0][0]], [0., e_vecs[0][1]], '.-')
-	plt.plot([0., e_vecs[1][0]], [0., e_vecs[1][1]], '.--')
+	#plt.plot([0., e_vecs[0][0]], [0., e_vecs[0][1]], '.-')
+	#plt.plot([0., e_vecs[1][0]], [0., e_vecs[1][1]], '.--')
+	plt.plot(*zip([0.,0.],e_vecs[0]), marker='.', ls='--')
+	plt.plot(*zip([0.,0.],e_vecs[1]),marker='^', ls='-')
+	
+	plt.plot(*zip([0.,0.],T[0]), marker='.', ls='--')
+	plt.plot(*zip([0.,0.],T[1]),marker='^', ls='-')
 	
 	
 	#
