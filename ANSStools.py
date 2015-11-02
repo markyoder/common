@@ -3,6 +3,8 @@ import matplotlib.dates as mpd
 import pytz
 import calendar
 import operator
+
+import urllib
 try:
 	# should work with python 3.x
 	import urllib.request, urllib.parse, urllib.error
@@ -11,10 +13,9 @@ except:
 	urllib.request.urlopen = urllib.urlopen
 
 try:
-	import urllib
 	import ullib2
 except:
-	print("failed while loading urllib and/or urllib2. maybe python 3.x?")
+	print("failed while loading urllib and/or urllib. maybe python 3.x?")
 	
 #import urllib.request, urllib.error, urllib.parse
 import requests
@@ -86,9 +87,13 @@ def getANSStoFilehandler(lon=[-125, -115], lat=[32, 45], minMag=4.92, dates0=[dt
 	#
 	#anssPrams={'format':'cnss', 'output':'readable', 'mintime':str(dates[0]).replace('-', '/'), 'maxtime':str(dates[1]).replace('-', '/'), 'minmag':str(minMag), 'minlat':lat[0], 'maxlat':lat[1], 'minlon':lon[0], 'maxlon':lon[1], 'etype':'E', 'searchlimit':Nmax}
 	# so this is better, but i think it is still limited to 1 second resolution.
-	anssPrams={'format':b'cnss', 'output':b'readable', 'mintime':datestr1, 'maxtime':datestr2, 'minmag':str(minMag), 'minlat':lat[0], 'maxlat':lat[1], 'minlon':lon[0], 'maxlon':lon[1], 'etype':b'E', 'searchlimit':Nmax}
+	#
+	anssPrams={'format':'cnss', 'output':'readable', 'mintime':datestr1, 'maxtime':datestr2, 'minmag':str(minMag), 'minlat':lat[0], 'maxlat':lat[1], 'minlon':lon[0], 'maxlon':lon[1], 'etype':b'E', 'searchlimit':Nmax}
+	#anssPrams={'format':b'cnss', 'output':b'readable', 'mintime':bytearray(datestr1, 'utf-8'), 'maxtime':bytearray(datestr2, 'utf-8'), 'minmag':bytearray(str(minMag), 'utf-8'), 'minlat':lat[0], 'maxlat':lat[1], 'minlon':lon[0], 'maxlon':lon[1], 'etype':b'E', 'searchlimit':Nmax}
 	#print "debug: ", anssPrams
-	f = urllib.request.urlopen('http://www.ncedc.org/cgi-bin/catalog-search2.pl', urllib.parse.urlencode(anssPrams))
+	post_data = urllib.parse.urlencode(anssPrams)
+	binary_post_data = post_data.encode('ascii')
+	f = urllib.request.urlopen('http://www.ncedc.org/cgi-bin/catalog-search2.pl', binary_post_data )
 	#
 	# we might return f, a string of f, or maybe a list of lines from f. we'll work that out shortly...
 	return f
@@ -347,7 +352,8 @@ def getANSSlist(lon=[-125, -115], lat=[32, 45], minMag=4.92, dates0=[dtm.datetim
 
 		print("data handle fetched...")
 		
-	for rw in fin:
+	for rw_0 in fin:
+		rw = rw_0.decode('utf-8')
 		if rw[0] in ["#", "<"] or rw[0:4] in ["Date", "date", "DATE", "----"]:
 			#print "skip a row... %s " % rw[0:10]
 			continue
