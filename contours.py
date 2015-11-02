@@ -25,7 +25,7 @@ def sortXYtuples(data, sortIndex1, sortIndex2, S1):
 		thisIndex = rows[sortIndex1]*S1+rows[sortIndex2]
 		dd[thisIndex] = rows
 	#
-	listIndex = dd.keys()
+	listIndex = list(dd.keys())
 	listIndex.sort()
 	#x
 	for myindex in listIndex:
@@ -219,7 +219,7 @@ def simpleContour2(data, z0=0, ix=0, iy=1, iz=2, dx=.1, dy=.1):
 	cdata = []
 	for rows in data2:
 		if [rows[ix]+1, rows[iy]] not in data2 or [rows[ix]-1, rows[iy]] not in data2 or [rows[ix], rows[iy]+1] not in data2 or [rows[ix], rows[iy]-1] not in data2 :
-			print str([rows[ix], rows[iy]]) + ' :: ' + str([rows[ix]-1, rows[iy]])
+			print(str([rows[ix], rows[iy]]) + ' :: ' + str([rows[ix]-1, rows[iy]]))
 			if not [[rows[ix], rows[iy]]] in cdata:
 				cdata = cdata + [[rows[ix], rows[iy]]]
 #		if findInTuples([rows[ix]+1, rows[iy]], data2)<0 or findInTuples([rows[ix]-1, rows[iy]], data2)<0:
@@ -448,7 +448,7 @@ def boxyContour(data, z0=0, ix=0, iy=1, iz=2, dx=.1, dy=.1):
 				thisPoly.append([(nextSeg[2]*dx)+minX, (nextSeg[3]*dy)+minY])
 				thisSeg=nextSeg
 			else:
-				print 'failed to find continuing vector.'
+				print('failed to find continuing vector.')
 				thisPoly.append([(polyTail[0]*dx)+minX, (polyTail[1]*dy)+minY])
 				break
 				break

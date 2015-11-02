@@ -31,9 +31,9 @@ class xy_index(dict):
 		i_x = self.get_x_index(x)
 		i_y = self.get_y_index(y)	# note that y0, dy (and x0, dx) will by default come from the class namespace.
 		#
-		if self.has_key(i_x)==False:
+		if (i_x in self)==False:
 			self[i_x]={}
-		if self[i_x].has_key(i_y)==False:
+		if (i_y in self[i_x])==False:
 			self[i_x][i_y]={}
 		#
 	#

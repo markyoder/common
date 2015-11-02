@@ -85,14 +85,14 @@ class intervalRecordBreaker:
 		if catFname==None: return None
 		
 		if theta!=None:
-			print "set aftershock catalog"
+			print("set aftershock catalog")
 			self.setAftershockCatalog(catFname, theta, clat, clon, ra, rb, eventDate, maxDate, skipSeconds )
 		else:
 			self.setNormalCat(catFname)	# default to socal...
 	
 	# 29 apr 2009 yoder: we want to do RB for a 2 year or so period in socal. create a normal active catalog.
 	# (but then we abandoned this for a renewed approach; see recordBreaker.py)
-	def setNormalCat(self, catFname=None, minlat=32, maxlat=36.5, minlon=-125, maxlon=-115, minDt=datetime.datetime(1984,01,01), maxDt=datetime.datetime(1985,12,31)):
+	def setNormalCat(self, catFname=None, minlat=32, maxlat=36.5, minlon=-125, maxlon=-115, minDt=datetime.datetime(1984,0o1,0o1), maxDt=datetime.datetime(1985,12,31)):
 		# set a normal (rectangular) catalog, no ellipse.
 		if catFname!=None:
 			self.setFullCat(catFname)
@@ -120,7 +120,7 @@ class intervalRecordBreaker:
 		#print "event (start) date, catname: %s, %s, %s" % (eventDate, catFname, self.catname)
 		#
 		if catFname!=None:
-			print "setting catalog from [%s]" % catFname
+			print(("setting catalog from [%s]" % catFname))
 			self.setFullCat(catFname)
 		#print "first cat row: %s" % self.fullCat[0]
 		#
@@ -186,7 +186,7 @@ class intervalRecordBreaker:
 			# dtm, lat, lon, mag
 			self.fullCat+=[[thisDtm, float(rowl[2]), float(rowl[3]), mag]]
 			#print 'catrow: %s' % self.fullCat[-1]
-		print "len of fullcat: %d, %s" % (len(self.fullCat), self.fullCat[0])
+		print(("len of fullcat: %d, %s" % (len(self.fullCat), self.fullCat[0])))
 	
 	def getMainEvent(self, cat=None):
 		# return catalog row of max magnitude (epicenter location (more or less)). note, by default we use ths shock-cat because it will
@@ -195,7 +195,7 @@ class intervalRecordBreaker:
 		if len(cat)==0: cat=self.fullCat
 		maxMag=cat[0][3]
 		maxIndex=0
-		for i in xrange(len(cat)):
+		for i in range(len(cat)):
 			#print i, maxMag, maxIndex, cat[i][3]
 			if cat[i][3]>maxMag:
 				maxIndex=i
@@ -226,7 +226,7 @@ class intervalRecordBreaker:
 		
 		plsq=spo.leastsq(omoriCumRes, p, args=(scipy.array(y), scipy.array(x)), full_output=0, maxfev=200000)
 		p=plsq[0]
-		for i in xrange(1000):
+		for i in range(1000):
 			# loop pseudo-recursively to converge:
 			plsq=spo.leastsq(omoriCumRes, p, args=(scipy.array(y), scipy.array(x)), full_output=0, maxfev=200000)
 			p=plsq[0]
@@ -243,7 +243,7 @@ class intervalRecordBreaker:
 			ndof+=1
 		chiSqr/=ndof
 		
-		print p[0], p[1], p[2], chiSqr
+		print((p[0], p[1], p[2], chiSqr))
 		return [p.tolist()+[chiSqr], [x,y,yfit]]
 
 	def plotfitAftershocksToOmori(self, minmag=1.2, p=None):
@@ -265,14 +265,14 @@ class intervalRecordBreaker:
 		#lats=map(operator.itemgetter(1), rbi.shockCat)
 		plt.figure(0)
 		plt.clf()
-		plt.plot(map(operator.itemgetter(2), self.shockCat), map(operator.itemgetter(1), self.shockCat), '.')
+		plt.plot(list(map(operator.itemgetter(2), self.shockCat)), list(map(operator.itemgetter(1), self.shockCat)), '.')
 		plt.show()
 	
 	def xyPlotFull(self):
 		#lats=map(operator.itemgetter(1), rbi.shockCat)
 		plt.figure(0)
 		plt.clf()
-		plt.plot(map(operator.itemgetter(2), self.fullCat), map(operator.itemgetter(1), self.fullCat), '.')
+		plt.plot(list(map(operator.itemgetter(2), self.fullCat)), list(map(operator.itemgetter(1), self.fullCat)), '.')
 		plt.show()
 	
 	def getLatLonRange(self, cat=None, latloncols=[1,2]):
@@ -320,8 +320,8 @@ class intervalRecordBreaker:
 		catmap.drawcoastlines(color='gray')
 		catmap.drawcountries(color='gray')
 		catmap.fillcontinents(color='beige')
-		xfull, yfull=catmap(map(operator.itemgetter(2), fcat), map(operator.itemgetter(1), fcat))
-		xshock, yshock=catmap(map(operator.itemgetter(2), scat), map(operator.itemgetter(1), scat))
+		xfull, yfull=catmap(list(map(operator.itemgetter(2), fcat)), list(map(operator.itemgetter(1), fcat)))
+		xshock, yshock=catmap(list(map(operator.itemgetter(2), scat)), list(map(operator.itemgetter(1), scat)))
 		epx, epy=catmap(epicenter[0], epicenter[1])
 		catmap.plot(xfull, yfull, 'g+', label='Full Catalog')
 		catmap.plot(xshock, yshock, 'b.', label='Aftershock zone')
@@ -365,8 +365,8 @@ class intervalRecordBreaker:
 		#
 		#plt.plot(map(operator.itemgetter(2), self.fullCat), map(operator.itemgetter(1), self.fullCat), '+')
 		#plt.plot(map(operator.itemgetter(2), self.shockCat), map(operator.itemgetter(1), self.shockCat), '.')
-		plt.plot(map(operator.itemgetter(2), fcat), map(operator.itemgetter(1), fcat), '+', label='Full Catalog')
-		plt.plot(map(operator.itemgetter(2), scat), map(operator.itemgetter(1), scat), '.', label='Aftershock zone')
+		plt.plot(list(map(operator.itemgetter(2), fcat)), list(map(operator.itemgetter(1), fcat)), '+', label='Full Catalog')
+		plt.plot(list(map(operator.itemgetter(2), scat)), list(map(operator.itemgetter(1), scat)), '.', label='Aftershock zone')
 		plt.plot([epicenter[0]], [epicenter[1]], 'ro', label='epicenter')
 		plt.legend(loc=legendLoc, numpoints=1)
 		if doSave: plt.savefig(saveName)
@@ -377,7 +377,7 @@ class intervalRecordBreaker:
 		fnameShock="%sShock.png"
 		
 		cats=[self.fullCat, self.shockCat]
-		fignums=xrange(len(cats))
+		fignums=list(range(len(cats)))
 		#
 		fsize=20
 		#minmag=1.1	# we should get this from the data
@@ -408,7 +408,7 @@ class intervalRecordBreaker:
 			intervals=[]
 			intbars=[]
 			magbars=[]
-			for i in xrange(len(currcat)):
+			for i in range(len(currcat)):
 				thisx=currcat[i][0]
 				magbars+=[[thisx,minmag], [thisx, currcat[i][3]], [thisx,minmag]]
 				if i==0: continue
@@ -425,17 +425,17 @@ class intervalRecordBreaker:
 			#ax1.plot_date(map(operator.itemgetter(0), currcat[1:]), intervals, '-')
 			
 			if nTime==False:
-				ax0.plot_date(map(operator.itemgetter(0), magbars), map(operator.itemgetter(1), magbars), '-')
-				ax1.plot_date(map(operator.itemgetter(0), intbars), map(operator.itemgetter(1), intbars), '-')
+				ax0.plot_date(list(map(operator.itemgetter(0), magbars)), list(map(operator.itemgetter(1), magbars)), '-')
+				ax1.plot_date(list(map(operator.itemgetter(0), intbars)), list(map(operator.itemgetter(1), intbars)), '-')
 				ax1.set_yscale('log')
 				a = plt.gca()
 				#a.set_xlim([currcat[0][0]-datetime.timedelta(days=20), currcat[-1][0]+datetime.timedelta(days=20)])
 				
 			if nTime==True:
-				y1=map(operator.itemgetter(1), magbars)
-				y2=map(operator.itemgetter(1), intbars)
-				ax0.plot(xrange(len(y1)), y1, '-')
-				ax1.plot(xrange(len(y2)), y2, '-')
+				y1=list(map(operator.itemgetter(1), magbars))
+				y2=list(map(operator.itemgetter(1), intbars))
+				ax0.plot(list(range(len(y1))), y1, '-')
+				ax1.plot(list(range(len(y2))), y2, '-')
 				ax1.set_yscale('log')
 				a = plt.gca()
 				a.set_xlim([0, int(1.1*len(y2))])		
@@ -449,11 +449,11 @@ class intervalRecordBreaker:
 		
 	def GRshock(self, doShow=True, fname='GRdist.png', plotTitle="Aftershock Region Magnitude Distribution"):
 		# [[evDateTime, lat, lon, mag, a, b], [row1], ...]
-		mags=map(operator.itemgetter(3), self.shockCat)
+		mags=list(map(operator.itemgetter(3), self.shockCat))
 		return self.GRdist(mags, doShow, fname, plotTitle)
 		
 	def GRfullcat(self, doShow=True, fname='GRdist.png', plotTitle="Full Catalog Magnitude Distribution"):
-		mags=map(operator.itemgetter(3), self.fullCat)
+		mags=list(map(operator.itemgetter(3), self.fullCat))
 		return self.GRdist(mags, doShow, fname, plotTitle)
 	
 	def GRdist(self, mags, doShow=True, fname='GRdist.png', plotTitle="Magnitude Distribution"):
@@ -468,7 +468,7 @@ class intervalRecordBreaker:
 		if doShow==True or fname!=None:
 			# make a plot and show and/or save
 			#Y=range(1, len(mags)+1)
-			Y=map(float, range(1, len(mags)+1))
+			Y=list(map(float, list(range(1, len(mags)+1))))
 			Y.reverse()
 			#print Y
 			#print len(Y)
@@ -493,9 +493,9 @@ class intervalRecordBreaker:
 		f.close()
 		
 		while minmag<=maxmag:
-			print "fitting for mag %f." % minmag
+			print(("fitting for mag %f." % minmag))
 			prams=self.fitAftershocksToOmori(minmag,p)[0]
-			print prams
+			print(prams)
 			f=open(fname,'a')
 			f.write("%f\t%f\t%f\t%f\t%f\n" % (minmag, prams[0], prams[1], prams[2], prams[3]))
 			f.close()
@@ -577,7 +577,7 @@ class intervalRecordBreaker:
 		for rw in ratios:
 			 #fdts+=[rw[1].toordinal() + float(rw[1].hour)/24 + rw[1].minute/(24*60) + rw[1].second/(24*3600) + rw[1].microsecond/(24*3600000000)]
 			 fdts+=[mpd.date2num(rw[1])]
-		plaindts=map(operator.itemgetter(1), ratios)
+		plaindts=list(map(operator.itemgetter(1), ratios))
 		
 		if mainEV==None: mainEV=self.getMainEvent(cat0)
 		
@@ -589,7 +589,7 @@ class intervalRecordBreaker:
 		#
 		# ultimately, averaging the actual ratios is not meaningful; we need to average the logs.
 		# so, <log(x)> = (1/N)(x1+x2+...xn) = log(Prod(x_i)**(1/N))
-		ploty=logaverageOver(map(operator.itemgetter(2), ratios), avlen)
+		ploty=logaverageOver(list(map(operator.itemgetter(2), ratios)), avlen)
 		#
 		thisAx.fill_between(plaindts, hitThreshold*scipy.ones(len(fdts),int), ploty[0], color='b', where=scipy.array([val>=hitThreshold for val in ploty[0]]))
 		thisAx.fill_between(plaindts, hitThreshold*scipy.ones(len(fdts),int), ploty[0], color='r', where=scipy.array([val<=hitThreshold for val in ploty[0]]))
@@ -653,7 +653,7 @@ class intervalRecordBreaker:
 		#
 		# for avtype==0 or avtype==1, we take the average (always take the average here)
 		# if avtype==0 or (equivalently), we've provided normalized ratios, we'll just take the average and skip the next step.
-		ploty=logaverageOver(map(operator.itemgetter(2), ratios), avlen)
+		ploty=logaverageOver(list(map(operator.itemgetter(2), ratios)), avlen)
 		#
 		mainEv=self.getMainEvent(cat0)
 		#
@@ -724,10 +724,10 @@ class intervalRecordBreaker:
 		# now, assign a ratio value to each earthquake:
 		#
 		#for eqrow in earthquakes:
-		for i in xrange(len(earthquakes)):
+		for i in range(len(earthquakes)):
 			#if eqrow[0]<ratios[0][1]: continue	# there is a winLen lag; we dont' have a forecast yet.
 			# add the r value of the closest ratios entry to each earthquake:
-			for irat in xrange(1, len(ratios)):
+			for irat in range(1, len(ratios)):
 				if earthquakes[i][0]==ratios[irat][1]:
 				#if ratios[irat][1]>=earthquakes[i][0]:
 					returnQuakes+=[[earthquakes[i]+[ratios[irat-1][2]]]]
@@ -759,7 +759,7 @@ class intervalRecordBreaker:
 		
 		#prevDtmBig=cat[0][0]
 		#prevDtmSmall=cat[0][0]
-		for i in xrange(1,len(cat)):
+		for i in range(1,len(cat)):
 			#dT=(cat[i][0]-cat[i-1][0]).seconds
 			dT=abs(datetimeToFloat(cat[i][0])-datetimeToFloat(cat[i-1][0]))		# aka, the interval between the current and previous event...
 			# note: i guess this WILL work backwards. intrinsically, it will work in reverse - intervals will be negative. we could
@@ -805,7 +805,7 @@ class intervalRecordBreaker:
 		mags=[]
 		if outdir[-1]!='/': outdir="%s/" % outdir
 		
-		print "begin plotRBintervalSet() {%f}" % curmag
+		print(("begin plotRBintervalSet() {%f}" % curmag))
 		
 		while curmag<=maxmag:
 			curRecords=self.getRBintervals(curmag)	# curr records -> [[bigs], [smalls]]
@@ -816,7 +816,7 @@ class intervalRecordBreaker:
 			mags+=[curmag]
 			curmag+=dmag
 		
-		print "intervalSet(s) assigned..."
+		print("intervalSet(s) assigned...")
 			
 		#print len(intervalSet)
 		#print len(intervalSet[0][0])
@@ -829,7 +829,7 @@ class intervalRecordBreaker:
 		XevLog=[1]
 		NevLog=[1]
 		YevLog=[1]
-		for iev in xrange(1,len(self.shockCat)):
+		for iev in range(1,len(self.shockCat)):
 			if (datetimeToFloat(self.shockCat[iev][0]) - datetimeToFloat(self.shockCat[iev-1][0])==0) : continue
 			#
 			Xev+=[datetimeToFloat(self.shockCat[iev][0]) - datetimeToFloat(self.shockCat[0][0])]
@@ -902,7 +902,7 @@ class intervalRecordBreaker:
 		#print YevLog
 		#print "lens: %d, %d" % (len(XevLog), len(YevLog))
 		fbooga=open("%sXevLog.dat" % outdir, 'w')
-		for booga in xrange(len(XevLog)):
+		for booga in range(len(XevLog)):
 			fbooga.write("%f\t%f\t%f\t%f\n" %(XevLog[booga], YevLog[booga], Xev[booga], Yev[booga]))
 			#fbooga.write("%f\t%f\n" %(XevLog[booga], YevLog[booga]))
 		fbooga.close()
@@ -915,7 +915,7 @@ class intervalRecordBreaker:
 			x=[]
 			y=[]
 			yfit=[]
-			for i in xrange(len(pset[0])):
+			for i in range(len(pset[0])):
 				#if i<1: continue		# (skip first element)
 				#print "dtm arg: %s" % (datetimeToFloat(pset[0][i])-startTime)
 				if log10(datetimeToFloat(pset[0][i])-startTime)<-1.0: continue
@@ -960,7 +960,7 @@ class intervalRecordBreaker:
 			x=[]
 			y=[]
 			yfit=[]
-			for i in xrange(len(pset[0])):
+			for i in range(len(pset[0])):
 				#if i<1: continue		# (skip first element)
 				if log10(datetimeToFloat(pset[0][i])-startTime)<-1.0: continue
 				x+=[log10(datetimeToFloat(pset[0][i])-startTime)]
@@ -995,12 +995,12 @@ class intervalRecordBreaker:
 		
 		###########################################################
 		###########################################################
-		print "natural time plots..."
+		print("natural time plots...")
 		# natrual time plots:
 		plt.figure(fignum)
 		plt.clf()
 		fignum+=1
-		plt.loglog(xrange(1,len(Yev)+1), Yev, '.')	# all the events...
+		plt.loglog(list(range(1,len(Yev)+1)), Yev, '.')	# all the events...
 		#plt.semilogy(range(1,len(Yev)+1), Yev, '.')
 		for pset in intervalSet:
 			#print len(pset), pset[3]
@@ -1022,12 +1022,12 @@ class intervalRecordBreaker:
 		# output to text-file:
 		fout=open('%sNRBNTdata.dat' % outdir, 'w')
 		fout.write("#nthEvent\tinterval\n")
-		for ii in xrange(len(Yev)):
+		for ii in range(len(Yev)):
 			fout.write("%d\t%f\n" % (ii, Yev[ii]))
 		fout.close()
 		fout=open('%sNRBNTrecs.dat' % outdir, 'w')
 		fout.write("#nEvents\tRBinterval\n")
-		for ii in xrange(len(pset[3])):
+		for ii in range(len(pset[3])):
 			fout.write("%d\t%f\n" % (pset[3][ii], pset[1][ii]))
 		fout.close()
 		
@@ -1067,7 +1067,7 @@ class intervalRecordBreaker:
 			y=[]
 			yfit=[]
 			#print len(pset[0])
-			for i in xrange(len(pset[0])):
+			for i in range(len(pset[0])):
 				#if i<1: continue		# (skip first element)
 				if log10(datetimeToFloat(pset[0][i])-startTime)<-1.0: continue
 				x+=[log10(pset[3][i])]
@@ -1110,7 +1110,7 @@ class intervalRecordBreaker:
 			x=[]
 			y=[]
 			yfit=[]
-			for i in xrange(len(pset[0])):
+			for i in range(len(pset[0])):
 				#if i<1: continue		# (skip first element)
 				if log10(datetimeToFloat(pset[0][i])-startTime)<-1.0: continue
 				x+=[log10(pset[3][i])]
@@ -1190,7 +1190,7 @@ def logaverageOver(inData=[], n=1):
 	inlogs=getLogs(inData)
 	N=1
 	currVal=0
-	for i in xrange(len(inData)):
+	for i in range(len(inData)):
 		#outData[0]+=[sum(inData[i-N:i+1])/float(N)]
 		#
 		#outData[0]+=[numpy.mean(inData[i+1-N:i+1])]
@@ -1211,7 +1211,7 @@ def averageOver(inData=[], n=1):
 	#
 	N=1
 	currVal=0
-	for i in xrange(len(inData)):
+	for i in range(len(inData)):
 		#outData[0]+=[sum(inData[i-N:i+1])/float(N)]
 		outData[0]+=[numpy.mean(inData[i+1-N:i+1])]
 		outData[1]+=[numpy.std(inData[i+1-N:i+1])]
@@ -1234,13 +1234,13 @@ def datetimeFromStrings(strDt, strTm, dtdelim='/'):
 	ltm=strTm.split(':')
 	
 	lsecs=ltm[2].split('.')
-	secs = long(lsecs[0])
+	secs = int(lsecs[0])
 	msecs=0
 	if len(lsecs)>1:
-		msecs = long(float("."+lsecs[1])*10**6)
+		msecs = int(float("."+lsecs[1])*10**6)
 	#
 	#return datetime.datetime(long(ldt[0]), long(ldt[1]), long(ldt[2]), long(ltm[0]), long(ltm[1]), long(ltm[2]))
-	return datetime.datetime(long(ldt[0]), long(ldt[1]), long(ldt[2]), long(ltm[0]), long(ltm[1]), secs, msecs)
+	return datetime.datetime(int(ldt[0]), int(ldt[1]), int(ldt[2]), int(ltm[0]), int(ltm[1]), secs, msecs)
 
 def datetimeToFloat(dtm):
 	# return number of days, including fractional bit.
@@ -1248,14 +1248,14 @@ def datetimeToFloat(dtm):
 
 def floatToDateTime(fdate):
 	# this might be off by a few hundred microseconds. in one example, i get 890000-> 889993
-	datepart=datetime.date.fromordinal(long(fdate))
-	hrs=24.0*(fdate-long(fdate))
-	hr=long(hrs)
+	datepart=datetime.date.fromordinal(int(fdate))
+	hrs=24.0*(fdate-int(fdate))
+	hr=int(hrs)
 	mins=(hrs-hr)*60
-	mn=long(mins)
+	mn=int(mins)
 	secs=(mins-mn)*60
-	sec=long(secs)
-	microsecs=long((secs-sec)*10**6)
+	sec=int(secs)
+	microsecs=int((secs-sec)*10**6)
 	
 	timepart=datetime.time(hr,mn,sec, microsecs)
 	

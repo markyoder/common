@@ -30,7 +30,7 @@ from threading import Thread
 import datetime as dtm
 import calendar
 import operator
-import urllib
+import urllib.request, urllib.parse, urllib.error
 import MySQLdb
 
 # maping bits:
@@ -77,7 +77,7 @@ class eqcatalog:
 		if thiscat==None: thiscat=self.cat
 		maxMag=thiscat[0][3]
 		maxIndex=0
-		for i in xrange(len(thiscat)):
+		for i in range(len(thiscat)):
 			#print i, maxMag, maxIndex, cat[i][3]
 			if thiscat[i][3]>maxMag:
 				maxIndex=i
@@ -169,7 +169,7 @@ class eqcatalog:
 		#vecdirs=[]	# vector directions; -1=left, 0=none, 1=right. this determines whether we want to be over or under. the first x-direction vector definds a right/left poly.
 		# get lat, lon extrema and make vectors:
 		extremeVerts=[verts[0][0], verts[0][0], verts[0][1], verts[0][1]]	# [minLon, maxLon, minLat, maxLat]
-		for i in xrange(len(verts)-1):
+		for i in range(len(verts)-1):
 			vecs+=[[verts[i], verts[i+1]]]
 			if verts[i+1][0]>extremeVerts[1]: extremeVerts[1]=verts[i+1][0]
 			if verts[i+1][0]<extremeVerts[0]: extremeVerts[0]=verts[i+1][0]
@@ -191,7 +191,7 @@ class eqcatalog:
 		# so long as we are consistent. also, as per old-school gaussian integrals, the number of times we cross a boundary: odd-> in , even -> out
 		# applies as well.
 		polycat=[]
-		for iev in xrange(len(cat)):
+		for iev in range(len(cat)):
 			event=cat[iev]
 			x=event[2]
 			y=event[1]
@@ -205,7 +205,7 @@ class eqcatalog:
 			#keepEvent=1	# start by assuming we keep the event.
 			inPolyTracker=0	# running up/down score. by default, do not keep the event.
 			#print "*#*#*#"
-			for ivec in xrange(len(vecs)):
+			for ivec in range(len(vecs)):
 				vec=vecs[ivec]
 				# make a line (if it's not vertical):
 				if vec[1][0]-vec[0][0]==0: continue	# vertical segments do not contribute, and we'll get x/0 error.
@@ -261,7 +261,7 @@ class eqcatalog:
 		vecdirs=[]	# vector directions; -1=left, 0=none, 1=right. this determines whether we want to be over or under. the first x-direction vector definds a right/left poly.
 		# get lat, lon extrema and make vectors:
 		extremeVerts=[verts[0][0], verts[0][0], verts[0][1], verts[0][1]]	# [minLon, maxLon, minLat, maxLat]
-		for i in xrange(len(verts)-1):
+		for i in range(len(verts)-1):
 			vecs+=[[verts[i], verts[i+1]]]
 			if verts[i+1][0]>extremeVerts[1]: extremeVerts[1]=verts[i+1][0]
 			if verts[i+1][0]<extremeVerts[0]: extremeVerts[0]=verts[i+1][0]
@@ -296,13 +296,13 @@ class eqcatalog:
 		# now we can spin through the catalog to find elements above/below poly segments, depending on the direction of the segment and right/left
 		# handedness of the poly.
 		polycat=[]
-		for iev in xrange(len(cat)):
+		for iev in range(len(cat)):
 			event=cat[iev]
 			x=event[2]
 			y=event[1]
 			keepEvent=1	# start by assuming we keep the event.
 			#print "*#*#*#"
-			for ivec in xrange(len(vecs)):
+			for ivec in range(len(vecs)):
 				# test the event against each polygon segment. if it falls outside one or more, don't keep it...
 				vec=vecs[ivec]
 				# make a line:
@@ -324,11 +324,11 @@ class eqcatalog:
 					smallX=vec[0][0]
 				#	
 				if (x<extremeVerts[0] or x>extremeVerts[1] or y<extremeVerts[2] or y>extremeVerts[3]):
-					print "extreme kill (%d, %d)" % (x, y)
+					print("extreme kill (%d, %d)" % (x, y))
 					keepEvent=0
 				if ((x>=smallX and x<=bigX) and ((lookUpDown==-1 and y>y0 ) or (lookUpDown==1 and y<y0))) :
 					keepEvent=0
-					print "f(x) kill (%d, %d)" % (x, y)
+					print("f(x) kill (%d, %d)" % (x, y))
 					# and for efficiency:
 					continue
 				#
@@ -336,7 +336,7 @@ class eqcatalog:
 			if keepEvent==1: polycat+=[event]
 		
 			
-		print extremeVerts
+		print(extremeVerts)
 		return polycat
 			
 		
@@ -432,7 +432,7 @@ class eqcatalog:
 		#newcat=self.getTimeRangeCat(fullcat, dts[0], dts[1])
 		#newcat=self.getLatLonSubcat(newcat, lats, lons, llcols)
 		newcat=[]
-		print lats, lons, dts
+		print(lats, lons, dts)
 		for rw in fullcat:
 			if rw[llmcols[0]]>=lats[0] and rw[llmcols[0]]<=lats[1] and rw[llmcols[1]]>=lons[0] and rw[llmcols[1]]<=lons[1] and rw[llmcols[2]]>=minmag and rw[0]>=dts[0] and rw[0]<=dts[1]:
 				newcat+=[rw]
@@ -468,7 +468,7 @@ class eqcatalog:
 		catmap.drawcoastlines(color='gray')
 		catmap.drawcountries(color='gray')
 		catmap.fillcontinents(color='beige')
-		xfull, yfull=catmap(map(operator.itemgetter(2), catalog), map(operator.itemgetter(1), catalog))
+		xfull, yfull=catmap(list(map(operator.itemgetter(2), catalog)), list(map(operator.itemgetter(1), catalog)))
 		#epx, epy=catmap(epicenter[0], epicenter[1])
 		catmap.plot(xfull, yfull, dots, label='Full Catalog')
 		#catmap.plot(epx, epy, 'ro')
@@ -517,10 +517,10 @@ class eqcatalog:
 		catmap.drawrivers(color='gray')
 		catmap.fillcontinents(color='beige')
 		
-		catmap.drawmeridians(range(int(llr[0][1]-2.0), int(llr[1][1]+2.0)), color='k', labels=[1,1,1,1])
-		catmap.drawparallels(range(int(llr[0][0]-2.0), int(llr[1][0]+2.0)), color='k', labels=[1, 1, 1, 1])
+		catmap.drawmeridians(list(range(int(llr[0][1]-2.0), int(llr[1][1]+2.0))), color='k', labels=[1,1,1,1])
+		catmap.drawparallels(list(range(int(llr[0][0]-2.0), int(llr[1][0]+2.0))), color='k', labels=[1, 1, 1, 1])
 		
-		xfull, yfull=catmap(map(operator.itemgetter(2), catalog), map(operator.itemgetter(1), catalog))
+		xfull, yfull=catmap(list(map(operator.itemgetter(2), catalog)), list(map(operator.itemgetter(1), catalog)))
 		epx, epy=catmap(epicenter[0], epicenter[1])
 		#catmap.plot(xfull, yfull, 'b,', label='Full Catalog')
 		catmap.plot(xfull, yfull, eqicon, label='earthquakes')
@@ -547,7 +547,7 @@ class eqcatalog:
 		return catmap
 	
 	def testMap(self):
-		import cPickle
+		import pickle
 		import time
 		#
 		fig=plt.figure()
@@ -562,20 +562,20 @@ class eqcatalog:
 		urlat=42
 		lon0=lllon + (urlon-lllon)/2.0
 		lat0=lllat + (urlat-urlat)/2.0
-		print "center: %f, %f" % (lon0, lat0)
+		print("center: %f, %f" % (lon0, lat0))
 		m = Basemap(llcrnrlon=lllon, llcrnrlat=lllat, urcrnrlon=urlon, urcrnrlat=urlat, resolution=self.mapres, projection='tmerc', lon_0=lon0, lat_0=lat0)
 		m.drawcountries()
 		m.drawrivers()
-		print time.clock()-t1,' secs to create original Basemap instance'
+		print(time.clock()-t1,' secs to create original Basemap instance')
 
 		# cPickle the class instance.
-		cPickle.dump(m,open('map.pickle','wb'),-1)
+		pickle.dump(m,open('map.pickle','wb'),-1)
 
 		# clear the figure
 		plt.clf()
 		# read cPickle back in and plot it again (should be much faster).
 		t1 = time.clock()
-		m2 = cPickle.load(open('map.pickle','rb'))
+		m2 = pickle.load(open('map.pickle','rb'))
 		# draw coastlines and fill continents.
 		m.drawcoastlines()
 		# fill continents and lakes
@@ -587,7 +587,7 @@ class eqcatalog:
 		m.drawmapboundary(fill_color='aqua')
 		# draw major rivers.
 		m.drawrivers(color='b')
-		print time.clock()-t1,' secs to plot using using a pickled Basemap instance'
+		print(time.clock()-t1,' secs to plot using using a pickled Basemap instance')
 		# draw parallels
 		circles = np.arange(48,65,2).tolist()
 		m.drawparallels(circles,labels=[1,1,0,0])
@@ -604,8 +604,8 @@ class eqcatalog:
 
 		#catalogs=[self.cat] + map(operator.itemgetter(1), self.subcats)
 		#catnames=[maincatname] + map(operator.itemgetter(0), self.subcats)
-		catalogs=map(operator.itemgetter(1), catalogses)
-		catnames=map(operator.itemgetter(0), catalogses)
+		catalogs=list(map(operator.itemgetter(1), catalogses))
+		catnames=list(map(operator.itemgetter(0), catalogses))
 		#return [catalogs, catnames]
 		catalog=catalogs[0]
 		
@@ -625,12 +625,12 @@ class eqcatalog:
 		llr[1][0]+=.1
 		llr[1][1]+=.1
 		
-		print "setting up map prams"
+		print("setting up map prams")
 		
 		cntr=[float(llr[0][0])+(llr[1][0]-float(llr[0][0]))/2.0, float(llr[0][1])+(llr[1][1]-float(llr[0][1]))/2.0]
-		print "create basmap object."
+		print("create basmap object.")
 		catmap=Basemap(llcrnrlon=llr[0][1], llcrnrlat=llr[0][0], urcrnrlon=llr[1][1], urcrnrlat=llr[1][0], resolution =self.mapres, projection='tmerc', lon_0=cntr[1], lat_0=cntr[0])
-		print "bm object created..."
+		print("bm object created...")
 		canvas=FigureCanvas(f0)
 		catmap.ax=f0.add_axes([0,0,1,1])
 		#f0.set_figsize_inches((8/catmap.aspect,8.))
@@ -639,14 +639,14 @@ class eqcatalog:
 		#f0.set_size_inches((10/catmap.aspect,10.))
 		f0.set_size_inches((10.,15.))
 		#
-		print "draw stuff on map..."
+		print("draw stuff on map...")
 		catmap.drawcoastlines(color='gray')
 		catmap.drawcountries(color='gray')
 		catmap.fillcontinents(color='beige')
 		#catmap.drawrivers(color='b')
 		catmap.drawstates()
-		catmap.drawmeridians(range(int(llr[0][1]-2.0), int(llr[1][1]+2.0)), color='k', labels=[1,1,1,1])
-		catmap.drawparallels(range(int(llr[0][0]-2.0), int(llr[1][0]+2.0)), color='k', labels=[1, 1, 1, 1])
+		catmap.drawmeridians(list(range(int(llr[0][1]-2.0), int(llr[1][1]+2.0))), color='k', labels=[1,1,1,1])
+		catmap.drawparallels(list(range(int(llr[0][0]-2.0), int(llr[1][0]+2.0))), color='k', labels=[1, 1, 1, 1])
 		#
 		'''
 		catmap.llcrnrlon=llr[0][1]+2.0
@@ -654,10 +654,10 @@ class eqcatalog:
 		catmap.urcrnrlon=llr[1][1]-2.0
 		catmap.urcrnrlat=llr[1][0]-2.0
 		'''
-		print "plot catalogs..."
+		print("plot catalogs...")
 		icat=0
 		for ct in catalogs:
-			xfull, yfull=catmap(map(operator.itemgetter(2), ct), map(operator.itemgetter(1), ct))
+			xfull, yfull=catmap(list(map(operator.itemgetter(2), ct)), list(map(operator.itemgetter(1), ct)))
 			catmap.plot(xfull, yfull, '.', label='%s' % catnames[icat], ms=2)
 			icat+=1
 		
@@ -770,10 +770,10 @@ class eqcatalog:
 		
 	def plotGRdist(self, mags=None, doShow=True, fname='GRdist.png', plotTitle="Magnitude Distribution", fignum=0):
 		# mags: a 1D array of magnitudes
-		if mags==None: mags=map(operator.itemgetter(3), self.cat)
+		if mags==None: mags=list(map(operator.itemgetter(3), self.cat))
 		# if mags rows are not scalar, assume a full standard type catalog has been passed.
 		try:
-			if len(mags[0])>=3: mags=map(operator.itemgetter(3), mags)
+			if len(mags[0])>=3: mags=list(map(operator.itemgetter(3), mags))
 		except TypeError:
 			# a list of scalars will throw a "can't get len." error. we should be able to skip without doing anything at all.
 			# maybe a better approach is to test the type of mags[0] for list or tuple...
@@ -862,7 +862,7 @@ class eqcatalog:
 			activecat+=[rw]
 		mags=vlinePadList(mags, minmag-abs(minmag)*.1)	# return the mags data padded for vertical line style plotting. this is just a trick to get width=1 histograms.
 		#
-		ax0.plot_date(map(operator.itemgetter(0), mags), map(operator.itemgetter(1), mags), '-')
+		ax0.plot_date(list(map(operator.itemgetter(0), mags)), list(map(operator.itemgetter(1), mags)), '-')
 		shockints=[]
 		
 		#print "plotdates: %s" % str(plotDates)
@@ -879,10 +879,10 @@ class eqcatalog:
 			#
 			#plt.plot(map(operator.itemgetter(0), shockints[-1]), scipy.array(map(operator.itemgetter(1), shockints[-1]))/float(wlen), '-', label='winLen=%d' % wlen)
 			#
-			X=map(operator.itemgetter(0), shockints[-1])
+			X=list(map(operator.itemgetter(0), shockints[-1]))
 			# pylab.date2num(dtm)
 			#XX=date2num(X)
-			ax1.plot(X, scipy.array(map(operator.itemgetter(1), shockints[-1]))/float(wlen), '-', label='$N=%d$' % wlen, lw=1.0)
+			ax1.plot(X, scipy.array(list(map(operator.itemgetter(1), shockints[-1])))/float(wlen), '-', label='$N=%d$' % wlen, lw=1.0)
 			#ax1.semilogy(map(operator.itemgetter(0), shockints[-1]), scipy.array(map(operator.itemgetter(1), shockints[-1]))/float(wlen), '-', label='winLen=%d' % wlen)
 			# fg.autofmt_xdate()
 			
@@ -918,7 +918,7 @@ class eqcatalog:
 			while (plotDates[1]!=None and plotDates[1]<shockints[-1][0][0]): a=shockints[-1].pop(0)
 			while plotDates[0]!=None and plotDates[0]>shockints[-1][-1][0]: a=shockints[-1].pop()
 			#
-			ax.plot(map(operator.itemgetter(0), shockints[-1]), scipy.array(map(operator.itemgetter(1), shockints[-1]))/float(wlen), '-', label='$N=%d$' % wlen, lw=1.0)
+			ax.plot(list(map(operator.itemgetter(0), shockints[-1])), scipy.array(list(map(operator.itemgetter(1), shockints[-1])))/float(wlen), '-', label='$N=%d$' % wlen, lw=1.0)
 			#ax1.semilogy(map(operator.itemgetter(0), shockints[-1]), scipy.array(map(operator.itemgetter(1), shockints[-1]))/float(wlen), '-', label='winLen=%d' % wlen)
 			
 		
@@ -941,7 +941,7 @@ class eqcatalog:
 			if rw[cols[3]]>=minmag: mags+=[[rw[cols[0]], rw[cols[3]]]]
 		mags=vlinePadList(mags, minmag-abs(minmag)*.1)	# return the mags data padded for vertical line style plotting. this is just a trick to get width=1 histograms.
 		#
-		ax.plot(map(operator.itemgetter(0), mags), map(operator.itemgetter(1), mags), '-')
+		ax.plot(list(map(operator.itemgetter(0), mags)), list(map(operator.itemgetter(1), mags)), '-')
 		ax.legend(loc='best')
 		return mags
 

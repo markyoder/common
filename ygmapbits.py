@@ -2,7 +2,7 @@
 
 # import pylab as plt
 import operator
-import urllib
+import urllib.request, urllib.parse, urllib.error
 #import httplib	# apparently, urllib is a happy wrapper that uses http lib; httplib is rarely used directly.
 import datetime as dtm
 import glob
@@ -200,7 +200,7 @@ def nearlyIn(vec, ary, precis=4.0):
 		#
 		if taildx+taildy+tipdx+tipdy<(10**(-precis)):
 			#rval=True
-			print "nearlyIn: %s, %s" % (vec, vc)
+			print("nearlyIn: %s, %s" % (vec, vc))
 			rval=i+1
 			break
 		i+=1
@@ -215,7 +215,7 @@ def getReducedPolys(fname='relm_pi.dat', L=.1):
 	# now, convert the polynomials to vectors like: [[[x1, y1], [x2, y2]] ]
 	allVecs=[]
 	for rw in squares:
-		for i in xrange(1,len(rw)):
+		for i in range(1,len(rw)):
 			#allVecs+=[[ [rw[i-1][0], rw[i-1][1]], [rw[i][0], rw[i][1]] ]]
 			#allVecs+=[[ [float(rw[i-1][0]), float(rw[i-1][1])], [float(rw[i][0]), float(rw[i][1])] ]]
 			# somewhere in the float handling processes, we get funny inequalities, aka, 32.650000000000006!=32.65, which seems obvious.
@@ -264,9 +264,9 @@ def getReducedPolys(fname='relm_pi.dat', L=.1):
 			rvecscount+=[1]
 	# return [rvecstemp, rvecscount]
 	newRvecs=[]
-	for i in xrange(len(rvecstemp)):
+	for i in range(len(rvecstemp)):
 		if rvecscount[i]==1: newRvecs+=[rvecstemp[i]]
-		if rvecscount[i]>1: print "%d, %s" % (rvecscount[i], rvecstemp[i])
+		if rvecscount[i]>1: print("%d, %s" % (rvecscount[i], rvecstemp[i]))
 	
 	# print "lens: %d, %d" % (len(rvecs), len(newRvecs))
 	rvecs=newRvecs
@@ -323,7 +323,7 @@ def getReducedPolys(fname='relm_pi.dat', L=.1):
 		#if polygons[-1][-1]!=polygons[-1][0]: polygons[-1]+=[polygons[-1][0]]
 	#
 	# now, compress the polygons:
-	for ii in xrange(len(polygons)):
+	for ii in range(len(polygons)):
 		if len(polygons[ii])<=5: continue		# just a square...
 		#for i in xrange(1,len(polygons[ii])):
 		i=1
@@ -350,7 +350,7 @@ def getReducedPolys(fname='relm_pi.dat', L=.1):
 # getANSSlist(): calls getANSShtml, then parses to a list of datetime, lat, lon, depth, mag, magt, Nst, Gap, Clo, RMS, Src, EventID
 # get ANSSregion
 
-def getANSSregion(region='socal', minMag=5.0, dates=[dtm.date(2001,01,01), dtm.date(2010, 12, 31)], Nmax=999999):
+def getANSSregion(region='socal', minMag=5.0, dates=[dtm.date(2001,0o1,0o1), dtm.date(2010, 12, 31)], Nmax=999999):
 	# some pre-defined regions like socal, norcal, cal, parkfield, global, blah, blah.
 	# since we can't overload the declaration, first check the 'region' for variable type.
 	# assemble lat, lon limits from the following lists. otherwise, if it's a list or tuple or whatever, use those vals.
@@ -360,7 +360,7 @@ def getANSSregion(region='socal', minMag=5.0, dates=[dtm.date(2001,01,01), dtm.d
 	# return getANSSdate(lon, lat, minMag, dates)
 	return None
 	
-def getANSShtml(lon=[-125, -115], lat=[32, 45], minMag=4.92, dates=[dtm.date(2001,01,01), dtm.date(2010, 12, 31)], Nmax=999999):
+def getANSShtml(lon=[-125, -115], lat=[32, 45], minMag=4.92, dates=[dtm.date(2001,0o1,0o1), dtm.date(2010, 12, 31)], Nmax=999999):
 	# use urllib in "post" mode. an example from http://www.python.org/doc/current/library/urllib.html#urllib.FancyURLopener)
 	# using "get" (aka, query-string method; note the ?%s string at the end of the URL, this is a single pram call to .urlopen):
 	#
@@ -377,12 +377,12 @@ def getANSShtml(lon=[-125, -115], lat=[32, 45], minMag=4.92, dates=[dtm.date(200
 	#
 	# make ANSS prams dictionary (thank james for the bash-template):
 	anssPrams={'format':'cnss', 'output':'readable', 'mintime':str(dates[0]).replace('-', '/'), 'maxtime':str(dates[1]).replace('-', '/'), 'minmag':str(minMag), 'minlat':lat[0], 'maxlat':lat[1], 'minlon':lon[0], 'maxlon':lon[1], 'etype':'E', 'searchlimit':Nmax}
-	f = urllib.urlopen('http://www.ncedc.org/cgi-bin/catalog-search2.pl', urllib.urlencode(anssPrams))
+	f = urllib.request.urlopen('http://www.ncedc.org/cgi-bin/catalog-search2.pl', urllib.parse.urlencode(anssPrams))
 	#
 	# we might return f, a string of f, or maybe a list of lines from f. we'll work that out shortly...
 	return f
 
-def getANSSlist(lon=[-125, -115], lat=[32, 45], minMag=4.92, dates=[dtm.date(2001,01,01), dtm.date(2010, 12, 31)], Nmax=999999):
+def getANSSlist(lon=[-125, -115], lat=[32, 45], minMag=4.92, dates=[dtm.date(2001,0o1,0o1), dtm.date(2010, 12, 31)], Nmax=999999):
 	anssList=[]
 	fin=getANSShtml(lon, lat, minMag, dates, Nmax)
 	for rw in fin:
@@ -413,7 +413,7 @@ def getANSSlist(lon=[-125, -115], lat=[32, 45], minMag=4.92, dates=[dtm.date(200
 
 
 
-def updateEventslist(lon=[-125, -115], lat=[32, 45], minMag=4.92, dates=[dtm.date(2001,01,01), dtm.date(2010, 12, 31)], Nmax=999999, foutname='scorecardevents.dat', expTimeDelta=dtm.timedelta(days=1)):
+def updateEventslist(lon=[-125, -115], lat=[32, 45], minMag=4.92, dates=[dtm.date(2001,0o1,0o1), dtm.date(2010, 12, 31)], Nmax=999999, foutname='scorecardevents.dat', expTimeDelta=dtm.timedelta(days=1)):
 	import datetime as dtm
 	# check currency of the events list. if it is expired, create a new data file from ANSS. return 0,1,2 (error, current, updated) as appropriate (?dunno?)
 	#
@@ -452,8 +452,8 @@ def updateEventslist(lon=[-125, -115], lat=[32, 45], minMag=4.92, dates=[dtm.dat
 					lstTime=modDtm[1].split(':')
 				while len(lstTime)<3:
 					lstTime+=[0]
-				for i in xrange(len(lstDate)): lstDate[i]=int(lstDate[i])
-				for i in xrange(len(lstTime)): lstTime[i]=int(float(lstTime[i]))
+				for i in range(len(lstDate)): lstDate[i]=int(lstDate[i])
+				for i in range(len(lstTime)): lstTime[i]=int(float(lstTime[i]))
 				modDate=dtm.datetime(lstDate[0], lstDate[1], lstDate[2], lstTime[0], lstTime[1], int(lstTime[2]))	# note, we skip fractional seconds.
 				freshDate=dtm.datetime.today()-expTimeDelta
 				#print modDate, freshDate, modDate<freshDate
@@ -477,7 +477,7 @@ def updateEventslist(lon=[-125, -115], lat=[32, 45], minMag=4.92, dates=[dtm.dat
 	fin=getANSShtml(lon, lat, minMag, dates, Nmax)
 	# tempFname='scripts/temp/tempEvents.dat'
 	tempFname=fullModpyDir('/var/www/quakemaps/scripts/temp/tempEvents.dat')
- 	tempFile=open(tempFname, 'w')
+	tempFile=open(tempFname, 'w')
 	tempFile.write("#!mod_date:\t%s\n" % str(dtm.datetime.today()))	# date the file
 	tempFile.write("#!CA earthquakes\n")
 	for rw in fin:

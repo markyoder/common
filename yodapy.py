@@ -30,7 +30,7 @@ import time
 import pytz
 import calendar
 import operator
-import urllib
+import urllib.request, urllib.parse, urllib.error
 import MySQLdb
 
 import rbIntervals as rbi
@@ -84,15 +84,15 @@ class linefit:
 			if len(inData[0])==1:
 				# 1D array; assume a plain ole sequence for X
 				self.datas=[]
-				self.datas+=[range(len(inData))]
-				self.datas+=[map(operator.itemgetter(0), inData)]
+				self.datas+=[list(range(len(inData)))]
+				self.datas+=[list(map(operator.itemgetter(0), inData))]
 			if len(inData[0])>=2:
 				# assume the data are ordered pairs, so we can sort them on the x coordinate.
 				inData.sort(key=operator.itemgetter(0))
 				self.datas=[]
-				self.datas+=[map(operator.itemgetter(0), inData)]
-				self.datas+=[map(operator.itemgetter(1), inData)]
-			if len(inData[0])>=3: self.datas+=[map(operator.itemgetter(2), inData)]
+				self.datas+=[list(map(operator.itemgetter(0), inData))]
+				self.datas+=[list(map(operator.itemgetter(1), inData))]
+			if len(inData[0])>=3: self.datas+=[list(map(operator.itemgetter(2), inData))]
 		if len(self.datas)==2:
 			# add even weight.
 			self.datas+=[[]]
@@ -128,7 +128,7 @@ class linefit:
 		X=[]
 		Y=[]
 		W=[]
-		for i in xrange(len(self.datas[0])):
+		for i in range(len(self.datas[0])):
 			if self.datas[0][i]<xmin: continue
 			#
 			X+=[self.datas[0][i]]
@@ -142,7 +142,7 @@ class linefit:
 		#print "do the fit..."
 		# note: args are (y, x, wt)
 		#plsq=spo.leastsq(self.linRes, p, args=(scipy.array(self.datas[1]), scipy.array(self.datas[0]), scipy.array(self.datas[2])), full_output=1)
-		print "prams: %s" % str(p)
+		print("prams: %s" % str(p))
 		#plsq=spo.leastsq(fitres, p, args=(scipy.array(Y), scipy.array(X), scipy.array(W), r0), full_output=1)
 		plsq=spo.leastsq(fitres, p, args=(scipy.array(Y), scipy.array(X), scipy.array(W)), full_output=1)
 		#print "fit done. sum error..."
@@ -168,7 +168,7 @@ class linefit:
 		logdatas=[[], [], []]
 		#
 		# get logarithms of data:
-		for i in xrange(len(thisdatas[0])):
+		for i in range(len(thisdatas[0])):
 			logdatas[0]+=[math.log(thisdatas[0][i], lbase)]
 			logdatas[1]+=[math.log(thisdatas[1][i], lbase)]
 			wt=1
@@ -201,7 +201,7 @@ class linefit:
 		X=[]
 		Y=[]
 		W=[]
-		for i in xrange(len(thisdatas[0])):
+		for i in range(len(thisdatas[0])):
 			if thisdatas[0][i]<xmin: continue
 			#
 			X+=[thisdatas[0][i]]
@@ -265,7 +265,7 @@ class linefit:
 	def tofile(self, fname='data/lfdata.dat', lfheader='#data from linefit object\n'):
 		fout=open(fname, 'w')
 		fout.write(lfheader)
-		for i in xrange(len(self.datas[0])):
+		for i in range(len(self.datas[0])):
 			fout.write('%f\t%f\t%f\n' % (self.datas[0][i], self.datas[1][i], self.datas[2][i]))
 		fout.close()
 	
@@ -305,7 +305,7 @@ class linefit:
 		return err
 	
 	def getFitPlotAry(self):
-		print "from getFitPlotAry(): %s, %s, %s, %s" % (self.datas[0][0], self.datas[0][-1], self.a, self.b)
+		print("from getFitPlotAry(): %s, %s, %s, %s" % (self.datas[0][0], self.datas[0][-1], self.a, self.b))
 		Fx=[self.datas[0][0], self.datas[0][-1]]
 		Fy=[self.datas[0][0]*self.b + self.a, self.datas[0][-1]*self.b + self.a]
 		return [Fx, Fy]
@@ -334,7 +334,7 @@ def logaverageOver(inData=[], n=1):
 	inlogs=getLogs(inData)
 	N=1
 	currVal=0
-	for i in xrange(len(inData)):
+	for i in range(len(inData)):
 		#outData[0]+=[sum(inData[i-N:i+1])/float(N)]
 		#
 		#outData[0]+=[numpy.mean(inData[i+1-N:i+1])]
@@ -355,7 +355,7 @@ def averageOver(inData=[], n=1):
 	#
 	N=1
 	currVal=0
-	for i in xrange(len(inData)):
+	for i in range(len(inData)):
 		#outData[0]+=[sum(inData[i-N:i+1])/float(N)]
 		outData[0]+=[numpy.mean(inData[i+1-N:i+1])]
 		outData[1]+=[numpy.std(inData[i+1-N:i+1])]
@@ -426,7 +426,7 @@ def plotPolygons(polygons=None):
 	plt.figure(0)
 	for ply in polygons:
 		#if len(ply)<5: continue
-		plt.fill(map(operator.itemgetter(1), ply), map(operator.itemgetter(0),ply), '.-')
+		plt.fill(list(map(operator.itemgetter(1), ply)), list(map(operator.itemgetter(0),ply)), '.-')
 	
 	plt.show()
 	
@@ -438,7 +438,7 @@ def printPolyLens(polygons=None):
 	#
 	i=0
 	for ply in polygons:
-		print "poly(%d): %d" % (i, len(ply))
+		print("poly(%d): %d" % (i, len(ply)))
 		i+=1
 	return None
 
@@ -468,8 +468,8 @@ def ANSSlist2SQL(anssList=None, catID=523, tempCatID=None):
 	strDel=""
 	# if no list has been provided, get a current, complete world catalog:
 	#if anssList==None: anssList=getANSSlist([-180, 180], [-90, 90], 0, [dtm.date(1932,01,01), dtm.date.fromordinal(dtm.datetime.now().toordinal())], 9999999)
-	if anssList==None: anssList=getANSSlist([-180., 180.], [-90., 90.], 0, [dtm.datetime(1932,01,01, tzinfo=pytz.timezone('UTC')), dtm.datetime.now(pytz.timezone('UTC'))], 9999999)
-	print "ANSS list retrieved, len: %d" % len(anssList)
+	if anssList==None: anssList=getANSSlist([-180., 180.], [-90., 90.], 0, [dtm.datetime(1932,0o1,0o1, tzinfo=pytz.timezone('UTC')), dtm.datetime.now(pytz.timezone('UTC'))], 9999999)
+	print("ANSS list retrieved, len: %d" % len(anssList))
 	#
 	if tempCatID==None:
 		# get a save catID; use that one.
@@ -493,7 +493,7 @@ def ANSSlist2SQL(anssList=None, catID=523, tempCatID=None):
 	myConn.query(strDel)
 	
 	#
-	print "begin sql insert loop..."
+	print("begin sql insert loop...")
 	for rw in anssList:
 		# write an insert string or command or whatever...
 		# one string, or a bunch? i don't think it matters for inserts.
@@ -533,7 +533,7 @@ def updateANSS2SQL(catID=523):
 	maxdates=myConn.cursor()
 	maxdates.execute("select max(eventDateTime) from Earthquakes where catalogID=%d" % catID)
 	maxDt=maxdates.fetchone()[0]
-	print "getList prams: (%s, %s, %s, %s, %s)" % ([-180, 180], [-90, 90], 0, [maxDt, dtm.date.fromordinal(dtm.datetime.now(tzutc).toordinal())], 9999999)
+	print("getList prams: (%s, %s, %s, %s, %s)" % ([-180, 180], [-90, 90], 0, [maxDt, dtm.date.fromordinal(dtm.datetime.now(tzutc).toordinal())], 9999999))
 	anssList=getANSSlist([-180, 180], [-90, 90], 0, [maxDt, dtm.datetime.now(tzutc)], 9999999)
 	
 	# now, delete most recent days events (they will be replaced):
@@ -807,7 +807,7 @@ def integerSpacedPoints(XY, intFactor=10):
 	outsies[0]+=[X[0]]
 	outsies[1]+=[Y[0]]
 	#
-	for i in xrange(1, len(X)):
+	for i in range(1, len(X)):
 		intx=int(X[i]/intFactor)
 		if intx==intsies[-1]: continue
 		intsies+=[intx]
