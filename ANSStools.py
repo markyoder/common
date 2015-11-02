@@ -227,7 +227,7 @@ def cat_from_usgs(duration='week', mc=2.5, rec_array=True):
 	# furl = urllib.urlopen('http://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/%s_%s.csv' % (mc, duration))
 	if True:
 	#for url_rw in url_data:
-		cols = furl.readline().replace('\n', '').split(',')
+		cols = (furl.readline()).decode('utf-8').replace('\n', '').split(',')
 		#
 		# index of cols we care about (... later):
 		#my_cols = ['latitude'
@@ -235,7 +235,8 @@ def cat_from_usgs(duration='week', mc=2.5, rec_array=True):
 		#my_col_names = ['event_date', 'lat', 'lon', 'mag', 'depth']
 		#my_col_types = ['M8[us]', 'float', 'float', 'float', 'float']
 		#
-		for rw in furl:
+		for rw_0 in furl:
+			rw=rw_0.decode('utf-8')
 			if rw[0] in (' ', '\n', '\r', '\t', '#'): continue
 			#
 			rw=rw.replace('\n', '')
