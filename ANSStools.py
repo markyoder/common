@@ -7,7 +7,8 @@ try:
 	# should work with python 3.x
 	import urllib.request, urllib.parse, urllib.error
 except:
-	print("could not load: urllib.request, urllib.parse, urllib.error.\n probably Python 2.x?")
+	print("failed while loading: urllib.request, urllib.parse, urllib.error.\n probably Python 2.x?")
+	urllib.request.urlopen = urllib.urlopen
 
 try:
 	import urllib
@@ -86,7 +87,7 @@ def getANSStoFilehandler(lon=[-125, -115], lat=[32, 45], minMag=4.92, dates0=[dt
 	#
 	#anssPrams={'format':'cnss', 'output':'readable', 'mintime':str(dates[0]).replace('-', '/'), 'maxtime':str(dates[1]).replace('-', '/'), 'minmag':str(minMag), 'minlat':lat[0], 'maxlat':lat[1], 'minlon':lon[0], 'maxlon':lon[1], 'etype':'E', 'searchlimit':Nmax}
 	# so this is better, but i think it is still limited to 1 second resolution.
-	anssPrams={'format':'cnss', 'output':'readable', 'mintime':datestr1, 'maxtime':datestr2, 'minmag':str(minMag), 'minlat':lat[0], 'maxlat':lat[1], 'minlon':lon[0], 'maxlon':lon[1], 'etype':'E', 'searchlimit':Nmax}
+	anssPrams={'format':b'cnss', 'output':b'readable', 'mintime':datestr1, 'maxtime':datestr2, 'minmag':str(minMag), 'minlat':lat[0], 'maxlat':lat[1], 'minlon':lon[0], 'maxlon':lon[1], 'etype':b'E', 'searchlimit':Nmax}
 	#print "debug: ", anssPrams
 	f = urllib.request.urlopen('http://www.ncedc.org/cgi-bin/catalog-search2.pl', urllib.parse.urlencode(anssPrams))
 	#
@@ -214,10 +215,13 @@ def cat_from_usgs(duration='week', mc=2.5, rec_array=True):
 	#
 	# for now, stick with the csv:
 	cat_out = []
-	print(("url_str: %s" % ('http://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/%s_%s.csv' % (mc, duration))))
+	print("url_str: %s" % ('http://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/%s_%s.csv' % (mc, duration)))
 	#url_data = requests.get('http://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/%s_%s.csv' % (mc, duration))
 	#with urllib.urlopen('http://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/%s_%s.csv' % (mc, duration)) as furl:
+	# 3.x likes:
 	furl = urllib.request.urlopen('http://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/%s_%s.csv' % (mc, duration))
+	# 2.x likes:
+	# furl = urllib.urlopen('http://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/%s_%s.csv' % (mc, duration))
 	if True:
 	#for url_rw in url_data:
 		cols = furl.readline().replace('\n', '').split(',')
