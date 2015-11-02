@@ -14,7 +14,7 @@ import numpy
 # probably the better approach is to use datetime.now(pytz.timezone('UTC'))
 tzutc=pytz.timezone('UTC')
 
-def anssDateStr(x=dtm.datetime.now(pytz.timezone('UTC'))):
+def anssDateStr(x=dtm.datetime.now(pytz.timezone('UTC')) ):
 	# yoder, 13 july 2015: ANSS seems to have made some changes. these date formats are breaking. probalby a matter of leading 0's in dates; might be fractional seconds.
 	#yr=x.year
 	#mo=x.month
@@ -46,8 +46,11 @@ def anssDateStr(x=dtm.datetime.now(pytz.timezone('UTC'))):
 	#return '%s/%s/%s,%s:%s:%f' % (yr, mo, dy, hr, mn, fsecs)
 	return '%s/%s/%s,%s:%s:%s' % (yr, mo, dy, hr, mn, sc)
 	
-#def getANSStoFilehandler(lon=[-125, -115], lat=[32, 45], minMag=4.92, dates0=[dtm.date(2001,01,01), dtm.date(2010, 12, 31)], Nmax=999999):
-def getANSStoFilehandler(lon=[-125, -115], lat=[32, 45], minMag=4.92, dates0=[dtm.datetime(2001,01,01, tzinfo=tzutc), dtm.datetime(2010, 12, 31, tzinfo=tzutc)], Nmax=999999):
+#def getANSStoFilehandler(lon=[-125, -115], lat=[32, 45], minMag=4.92, dates0=[dtm.date(2001,1,1), dtm.date(2010, 12, 31)], Nmax=999999):
+
+def getANSStoFilehandler(lon=[-125, -115], lat=[32, 45], minMag=4.92, dates0=[dtm.datetime(2001,1,1, tzinfo=tzutc), dtm.datetime(2010, 12, 31, tzinfo=tzutc)], Nmax=999999):
+	#
+	#
 	# fetch data from ANSS; return a file handler.
 	#
 	# use urllib in "post" mode. an example from http://www.python.org/doc/current/library/urllib.html#urllib.FancyURLopener)
@@ -82,8 +85,8 @@ def getANSStoFilehandler(lon=[-125, -115], lat=[32, 45], minMag=4.92, dates0=[dt
 	# we might return f, a string of f, or maybe a list of lines from f. we'll work that out shortly...
 	return f
 
-#def catfromANSS(lon=[135., 150.], lat=[30., 41.5], minMag=4.0, dates0=[dtm.date(2005,01,01), None], Nmax=999999, fout='cats/mycat.cat'):
-def catfromANSS(lon=[135., 150.], lat=[30., 41.5], minMag=4.0, dates0=[dtm.datetime(2005,01,01, tzinfo=tzutc), None], Nmax=None, fout=None, rec_array=True):
+#def catfromANSS(lon=[135., 150.], lat=[30., 41.5], minMag=4.0, dates0=[dtm.date(2005,1,1), None], Nmax=999999, fout='cats/mycat.cat'):
+def catfromANSS(lon=[135., 150.], lat=[30., 41.5], minMag=4.0, dates0=[dtm.datetime(2005,1,1, tzinfo=tzutc), None], Nmax=None, fout=None, rec_array=True):
 	# get a basic catalog. then, we'll do a poly-subcat. we need a consistent catalog.
 	# eventually, cut up "japancatfromANSS()", etc. to call this base function and move to yodapy.
 	#
@@ -100,7 +103,7 @@ def catfromANSS(lon=[135., 150.], lat=[30., 41.5], minMag=4.0, dates0=[dtm.datet
 		dates0[1]=dtm.datetime.now(tzutc)
 	#	
 	catlist=getANSSlist(lon, lat, minMag, dates0, Nmax, None)
-	if fout==None: print " no file."
+	if fout==None: print(" no file.")
 	
 	if fout!=None:
 		f=open(fout, 'w')
@@ -203,7 +206,7 @@ def cat_from_usgs(duration='week', mc=2.5, rec_array=True):
 	#
 	# for now, stick with the csv:
 	cat_out = []
-	print "url_str: %s" % ('http://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/%s_%s.csv' % (mc, duration))
+	print("url_str: %s" % ('http://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/%s_%s.csv' % (mc, duration)))
 	#url_data = requests.get('http://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/%s_%s.csv' % (mc, duration))
 	#with urllib.urlopen('http://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/%s_%s.csv' % (mc, duration)) as furl:
 	furl = urllib.urlopen('http://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/%s_%s.csv' % (mc, duration))
@@ -247,7 +250,7 @@ def cat_from_usgs(duration='week', mc=2.5, rec_array=True):
 		#
 		return cat_out
 #
-def dictfromANSS(lons=[135., 150.], lats=[30., 41.5], mc=4.0, date_range=[dtm.datetime(2005,01,01, tzinfo=tzutc), None], Nmax=999999, fout='cats/mycat.cat'):
+def dictfromANSS(lons=[135., 150.], lats=[30., 41.5], mc=4.0, date_range=[dtm.datetime(2005,1,1, tzinfo=tzutc), None], Nmax=999999, fout='cats/mycat.cat'):
 	#
 	# get a dictionary type catalog (aka, a list of dicts[{}, {}, ...]
 	# note the modified syntax to the newer standards (lon-->lons, minMag --> mc, dates0-->date_range) for
@@ -314,7 +317,7 @@ def dictfromANSS(lons=[135., 150.], lats=[30., 41.5], mc=4.0, date_range=[dtm.da
 	#return catlist
 	return rlist
 
-def getANSSlist(lon=[-125, -115], lat=[32, 45], minMag=4.92, dates0=[dtm.datetime(2001,01,01, tzinfo=tzutc), dtm.datetime(2010, 12, 31, tzinfo=tzutc)], Nmax=999999, fin=None):
+def getANSSlist(lon=[-125, -115], lat=[32, 45], minMag=4.92, dates0=[dtm.datetime(2001,1,1, tzinfo=tzutc), dtm.datetime(2010, 12, 31, tzinfo=tzutc)], Nmax=999999, fin=None):
 	#
 	# this is typically a preliminary function call. it returns a list object-catalog. the date will be in string format.
 	# typicall, use catfromANSS() for a more useful list. also see the (new) dictfromANSS() for a dict. type catalog.
@@ -330,7 +333,7 @@ def getANSSlist(lon=[-125, -115], lat=[32, 45], minMag=4.92, dates0=[dtm.datetim
 	if fin==None:
 		#print "get data from ANSS...(%s, %s, %s, %s, %s)" % (lon, lat, minMag, dates, Nmax)
 		fin = getANSStoFilehandler(lon, lat, minMag, dates, Nmax)
-		#fin = getANSStoFilehandler([-180, 180], [-90, 90], 0, [datetime.date(1910,01,01), datetime.date(2010, 01, 16)], 9999999)
+		#fin = getANSStoFilehandler([-180, 180], [-90, 90], 0, [datetime.date(1910,1,1), datetime.date(2010, 01, 16)], 9999999)
 
 		print "data handle fetched..."
 		
