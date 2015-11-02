@@ -3,6 +3,7 @@ import matplotlib.dates as mpd
 import pytz
 import calendar
 import operator
+import sys
 
 import urllib
 try:
@@ -10,7 +11,7 @@ try:
 	import urllib.request, urllib.parse, urllib.error
 except:
 	print("failed while loading: urllib.request, urllib.parse, urllib.error.\n probably Python 2.x?")
-	urllib.request.urlopen = urllib.urlopen
+	#urllib.request.urlopen = urllib.urlopen
 
 try:
 	import ullib2
@@ -91,9 +92,16 @@ def getANSStoFilehandler(lon=[-125, -115], lat=[32, 45], minMag=4.92, dates0=[dt
 	anssPrams={'format':'cnss', 'output':'readable', 'mintime':datestr1, 'maxtime':datestr2, 'minmag':str(minMag), 'minlat':lat[0], 'maxlat':lat[1], 'minlon':lon[0], 'maxlon':lon[1], 'etype':b'E', 'searchlimit':Nmax}
 	#anssPrams={'format':b'cnss', 'output':b'readable', 'mintime':bytearray(datestr1, 'utf-8'), 'maxtime':bytearray(datestr2, 'utf-8'), 'minmag':bytearray(str(minMag), 'utf-8'), 'minlat':lat[0], 'maxlat':lat[1], 'minlon':lon[0], 'maxlon':lon[1], 'etype':b'E', 'searchlimit':Nmax}
 	#print "debug: ", anssPrams
-	post_data = urllib.parse.urlencode(anssPrams)
-	binary_post_data = post_data.encode('ascii')
-	f = urllib.request.urlopen('http://www.ncedc.org/cgi-bin/catalog-search2.pl', binary_post_data )
+	#post_data = urllib.parse.urlencode(anssPrams)
+	#binary_post_data = post_data.encode('ascii')
+	#
+	# now, let's support some backwards compatibility, at least for a little while:
+	if sys.version_info.major == 2:
+		# old python...
+		f = urllib.urlopen('http://www.ncedc.org/cgi-bin/catalog-search2.pl', urllib.urlencode(anssPrams))
+	else:
+		binary_post_data = urllib.parse.urlencode(anssPrams).encode('ascii')
+		f = urllib.request.urlopen('http://www.ncedc.org/cgi-bin/catalog-search2.pl', binary_post_data )
 	#
 	# we might return f, a string of f, or maybe a list of lines from f. we'll work that out shortly...
 	return f
@@ -222,12 +230,17 @@ def cat_from_usgs(duration='week', mc=2.5, rec_array=True):
 	#url_data = requests.get('http://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/%s_%s.csv' % (mc, duration))
 	#with urllib.urlopen('http://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/%s_%s.csv' % (mc, duration)) as furl:
 	# 3.x likes:
-	furl = urllib.request.urlopen('http://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/%s_%s.csv' % (mc, duration))
+	#furl = urllib.request.urlopen('http://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/%s_%s.csv' % (mc, duration))
 	# 2.x likes:
 	# furl = urllib.urlopen('http://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/%s_%s.csv' % (mc, duration))
 	if True:
 	#for url_rw in url_data:
-		cols = (furl.readline()).decode('utf-8').replace('\n', '').split(',')
+		if sys.version_info.major == 2:
+			furl = urllib.urlopen('http://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/%s_%s.csv' % (mc, duration))
+			cols = furl.readline().replace('\n', '').split(',')
+		else:
+			furl = urllib.request.urlopen('http://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/%s_%s.csv' % (mc, duration))
+			cols = (furl.readline()).decode('utf-8').replace('\n', '').split(',')
 		#
 		# index of cols we care about (... later):
 		#my_cols = ['latitude'
@@ -236,7 +249,11 @@ def cat_from_usgs(duration='week', mc=2.5, rec_array=True):
 		#my_col_types = ['M8[us]', 'float', 'float', 'float', 'float']
 		#
 		for rw_0 in furl:
-			rw=rw_0.decode('utf-8')
+			if sys.version_info.major == 2:
+				rw = rw_0
+			else:
+				rw=rw_0.decode('utf-8')
+			#
 			if rw[0] in (' ', '\n', '\r', '\t', '#'): continue
 			#
 			rw=rw.replace('\n', '')
@@ -354,7 +371,11 @@ def getANSSlist(lon=[-125, -115], lat=[32, 45], minMag=4.92, dates0=[dtm.datetim
 		print("data handle fetched...")
 		
 	for rw_0 in fin:
-		rw = rw_0.decode('utf-8')
+		if sys.version_info.major ==  2:
+			rw = rw_0
+		else:
+			rw=rw_0.decode('utf-8')
+		#
 		if rw[0] in ["#", "<"] or rw[0:4] in ["Date", "date", "DATE", "----"]:
 			#print "skip a row... %s " % rw[0:10]
 			continue
