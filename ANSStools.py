@@ -428,7 +428,54 @@ def getANSSlist(lon=[-125, -115], lat=[32, 45], minMag=4.92, dates0=[dtm.datetim
 		#anssList+=[[rw[0:22].strip(), float(rw[23:31].strip()), float(rw[32:41].strip()), float(rw[42:48].strip()), float(rw[49:54].strip()), rw[55:59].strip(), float(rw[60:64].strip()), rw[65:68].strip(), rw[69:73].strip(), float(rw[74:78].strip()), rw[79:83].strip(), rw[84:96].strip()]]
 		anssList+=[[rwEvdt, rwLat, rwLon, rwDepth, rwMag, rwMagType, rwNst, rwGap, rwClo, rwrms, rwsrc, rwCatEventId]]
 	return anssList
+#
+	
+def auto_cat_params(lon_center=None, lat_center=None, d_lat_0=.25, d_lon_0=.5, dt_0=10, mc_0=4.5, to_dt=None, range_factor=5., **kwargs):
+	'''
+	# auto_cat: for a given input area of interest, find the largest earthquake, then get a new catalog around that earthquake,
+	# based on rupture length scaling, etc. 
+	#
+	# d_lat/d_lon: lat/lon spread for preliminary catalog.
+	# mc_0: mc for preliminary catalog. we're looking for big earthquakes, so we can save some compute cycles and
+	# make this fairly large.
+	'''
+	#
+	#if to_dt == None: to_dt = dtm.datetime.now(pytz.timezone('UTC'))
+	to_dt = (to_dt or dtm.datetime.now(pytz.timezone('UTC')))
+	mc_0  = (mc_0 or mc)
+	#
+	if lon_center==None and lat_center==None:
+		# let's look for any large earthquake in the world. assume for this, mc
+		mc_0=6.0
+		lat_center = 0.
+		lon_center = 0.
+		d_lat_0 = 88.
+		d_lon_0 = -180.
+	#
+	# get a preliminary catalog:
+	print('stuff: ', lat_center, lon_center, d_lon_0, d_lat_0, mc_0, to_dt)
+	cat_0 = catfromANSS(lon=[lon_center-d_lon_0, lon_center+d_lon_0], lat=[lat_center - d_lat_0, lat_center+d_lat_0], minMag=mc_0, dates0=[to_dt-dtm.timedelta(days=dt_0), to_dt], fout=None, rec_array=True)
+	#
+	#biggest_earthquake = filter(lambda x: x['mag']==max(cat_0['mag']), cat_0)[0]
+	mainshock = {cat_0.dtype.names[j]:x for j,x in enumerate(list(filter(lambda x: x['mag']==max(cat_0['mag']), cat_0))[0])}
+	#
+	# now, get new map domain based on rupture length, etc.
+	L_r = .5*10.0**(.5*mainshock['mag'] - 1.76)
+	delta_lat = range_factor*L_r/lat2km
+	delta_lon = range_factor*L_r/(lat2km*math.cos(deg2rad*mainshock['lat']))
+	print("mainshock data: ", mainshock, L_r, delta_lat, delta_lon)
+	#
+	return {'lon':[mainshock['lon']-delta_lon, mainshock['lon']+delta_lon], 'lat':[mainshock['lat']-delta_lat, mainshock['lat']+delta_lat], 'mainshock_date':mainshock['event_date'], 'mainshock_lat':mainshock['lat'], 'mainshock_lon':mainshock['lon']}
+	
+def auto_cat(lon_center=None, lat_center=None, d_lat_0=.25, d_lon_0=.5, dt_0=10,  mc=2.5, mc_0=4.5, to_dt=None, catlen_before=5.0*365.0, catlen_after=5.0*365., range_factor=5., rec_array=True, **kwargs):
+	#
+	cat_params = auto_cat_params(lon_center=lon_center, lat_center=lat_center, d_lat_0=d_lat_0, d_lon_0=d_lon_0, dt_0=dt_0, mc_0=mc_0, to_dt=to_dt, range_factor=range_factor)
+	#
+	#return atp.catfromANSS(lon=[mainshock['lon']-delta_lon, mainshock['lon']+delta_lon], lat=[mainshock['lat']-delta_lat, mainshock['lat']+delta_lat], minMag=mc, dates0=[to_dt-dtm.timedelta(days=catlen), to_dt], fout=None, rec_array=True)
+	return catfromANSS(lat=cat_params['lat'], lon=cat_params['lon'], minMag=mc, fout=None, rec_array=True)
 
+
+#
 def isnumeric(value):
   return str(value).replace(".", "").replace("-", "").isdigit()
  
