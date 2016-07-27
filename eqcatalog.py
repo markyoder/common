@@ -29,12 +29,14 @@ import time
 from matplotlib import axis as aa
 #from threading import Thread
 #
-import rbIntervals as rbi
+# i think this module is fully depricated at this point...
+#import rbIntervals as rbi
 #
 import datetime as dtm
 import pytz
 import calendar
 import operator
+# these may need some tweaking for Python3 compatibility.
 import urllib.request, urllib.parse, urllib.error
 #
 from geographiclib.geodesic import Geodesic as ggp
@@ -143,12 +145,14 @@ class eqcatalog:
 		#for i in xrange(len(cat)):
 		for i,rw in enumerate(cat):
 			#
-			if isinstance(rw[0], numpy.datetime64) or hasattr(rw[0], 'tzinfo')==False: 
-				print('rw[0]', rw[0])
+			#print('type: ', type(rw[0]))
+			if isinstance(rw[0], numpy.datetime64) or not hasattr(rw[0], 'tzinfo'): 
+				#print('datetime64 or no tzinfo :: rw[0]', rw[0])
+				#
 				cat[i][0] = mpd.num2date(mpd.datestr2num(str(rw[0])))
 				#cat[i][0] = cat[i][0].tolist()
-				print(cat[i][0], type(cat[i][0]))
-			if cat[i][0].tzinfo==None:
+				#print(cat[i][0], type(cat[i][0]))
+			if not isinstance(rw[0], numpy.datetime64) and cat[i][0].tzinfo==None:
 				# no time-zone info. add UTC timezone.
 				dt0=cat[i][0]
 				thisdt=dtm.datetime(*dt0.timetuple()[:-2], tzinfo=pytz.timezone('UTC'))
@@ -160,15 +164,20 @@ class eqcatalog:
 	def getMainEvent(self, thiscat=None):
 		# return catalog row of max magnitude (epicenter location (more or less)) event. note, by default we use ths shock-cat because it will
 		# be faster than using the fullCat AND, the fullCat is likely to have other large earthquakes.
+		#
+		# a sort on [[j,m], ...] would probalby be faster...
+		#
 		if thiscat==None: thiscat=self.cat
 		maxMag=thiscat[0][3]
 		maxIndex=0
-		for i in range(len(thiscat)):
+		for i,rw in enumerate(thiscat):
 			#print i, maxMag, maxIndex, cat[i][3]
-			if thiscat[i][3]>maxMag:
+			#if thiscat[i][3]>maxMag:
+			if rw[3]>maxMag:
 				maxIndex=i
 				maxMag=thiscat[i][3]
-		return thiscat[maxIndex] + [maxIndex]
+		#print('*** ', list(thiscat[maxIndex]) , [maxIndex])
+		return list(thiscat[maxIndex]) + [maxIndex]
 	
 	def getIndexDtm(self, mindt=None, cat=None, datecol=0):
 		if cat==None or type(cat).__name__ not in ('list', 'tuple'): cat=self.cat
@@ -1173,6 +1182,7 @@ class eqcatalog:
 			#print "range: ", max(0, (i-fitlen)), ", ", i
 			#print "these_x: ", these_x
 			#print "these_y: ", these_r
+			# ... and this module is crazy inefficient. a regular numpy.linalg.lstsq() or curve_fit()... or whatever would be better.
 			lf  = linefit.linefit([these_x, these_r])
 			lf.doFit()
 			#
@@ -1356,12 +1366,20 @@ class eqcatalog:
 
 	def getIntervals(self, catList=None, interval_length=1):
 		# returns raw intervals in days (aka, <dt(winLen=10)> ~ 10*<dt(winLen=1)> )
-		if catList==None: catList = self.getcat(0)
+		if catList is None: catList = self.getcat(0)
 		#if interval_length==None: interval_length = 10
 		#
 		# let's get fancy and allow for the list to be reverse-sorted.
 		# and in fact, let's sacrifice a bit of speed to be sure we're getting a sorted list.
 		# we only need the dates...
+		if isinstance(catList[0][0], numpy.datetime64):
+			f_dt_2_num = lambda x: mpd.datestr2num(str(x))
+		else:
+			f_dt_2_num = lambda x: mpd.date2num(x)
+		
+		ts = sorted([f_dt_2_num(rw[0]) for rw in catList])
+		return [[mpd.num2date(t), t-ts[j*interval_length]] for j,t in enumerate(ts[interval_length::interval_length])]
+		'''
 		event_dates=list(map(operator.itemgetter(0), catList))
 		mylist=list(map(mpd.date2num, event_dates))	# float type in units of "days"
 		mylist.sort()	# now in ascending order...
@@ -1377,7 +1395,7 @@ class eqcatalog:
 		#print "shape: ", return_intervals.shape, len(event_dates[interval_length:]), len(intervals)
 		#		
 		return return_intervals.transpose()
-	
+		'''
 	def getNRBratios(self, intervals=None, winlen=10, delta_t=1, reverse=False, catnum=0):
 		# slicker replacement for the current record-breaker engine. we'll do our own plots too.
 		# intervals should be like [ [t_end, dt], [t_end, dt], ... ]

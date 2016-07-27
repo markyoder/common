@@ -31,7 +31,11 @@ import pytz
 import calendar
 import operator
 import urllib.request, urllib.parse, urllib.error
-import MySQLdb
+try:
+	import MySQLdb
+	has_MySQLdb = True
+except:
+	has_MySQLdb = False
 
 import rbIntervals as rbi
 
@@ -442,121 +446,121 @@ def printPolyLens(polygons=None):
 		i+=1
 	return None
 
-##################
-# write an all-python method to fetch ANSS data and insert into MySQL
-# this will eventually replace {NEICANSS2sql.py}.fetchAndInsertANSS()
+if has_MySQLdb:
+	##################
+	# write an all-python method to fetch ANSS data and insert into MySQL
+	# this will eventually replace {NEICANSS2sql.py}.fetchAndInsertANSS()
 
-#
-def replaceANSS2SQL(anssList=None, catID=523, tempCatID=None):
-	# just a familiar-name wrapper:
-	return ANSSlist2SQL(anssList, catID, tempCatID)
-	
-def ANSSlist2SQL(anssList=None, catID=523, tempCatID=None):
-	# this is the end-product; call it and update the WHOLE CATALOG. BUT, this replaces the whole catalog, so it takes forever.
-	# we need an update system...
 	#
-	# insert an ANSSlist into MySQL as catalogID={catID}. use tempCatID to temporarily dump existing data to a safe place,
-	# should something go wrong. reserve an option to skip this step for brevity.
-	#
-	sqlHost = 'localhost'
-	sqlUser = 'myoder'
-	sqlPassword = 'yoda'
-	sqlPort = 3306
-	sqlDB = 'QuakeData'
-	myConn = MySQLdb.connect(host=sqlHost, user=sqlUser, passwd=sqlPassword, port=sqlPort, db=sqlDB)
-	myConn2 = MySQLdb.connect(host=sqlHost, user=sqlUser, passwd=sqlPassword, port=sqlPort, db=sqlDB)
-	strDel=""
-	# if no list has been provided, get a current, complete world catalog:
-	#if anssList==None: anssList=getANSSlist([-180, 180], [-90, 90], 0, [dtm.date(1932,01,01), dtm.date.fromordinal(dtm.datetime.now().toordinal())], 9999999)
-	if anssList==None: anssList=getANSSlist([-180., 180.], [-90., 90.], 0, [dtm.datetime(1932,0o1,0o1, tzinfo=pytz.timezone('UTC')), dtm.datetime.now(pytz.timezone('UTC'))], 9999999)
-	print("ANSS list retrieved, len: %d" % len(anssList))
-	#
-	if tempCatID==None:
-		# get a save catID; use that one.
-		#strGetMaxID="select min(catalogID) from Earthquakes where catalogID>%d" % catID
-		strGetMaxID="select max(catalogID) from Earthquakes"
-		myConn.query(strGetMaxID)
-		rID=myConn.store_result()
-		# there should only be one value. for now, assume this is true (which is, in general, really bad DB programming form):
-		tempCatID=int(rID.fetch_row()[0][0])+1
-		#rID=None
-		strDel='delete from Earthquakes where catalogID=%d; update Earthquakes set catalogID=%d where catalogID=%d' % (tempCatID, tempCatID, catID)
+	def replaceANSS2SQL(anssList=None, catID=523, tempCatID=None):
+		# just a familiar-name wrapper:
+		return ANSSlist2SQL(anssList, catID, tempCatID)
+
+	def ANSSlist2SQL(anssList=None, catID=523, tempCatID=None):
+		# this is the end-product; call it and update the WHOLE CATALOG. BUT, this replaces the whole catalog, so it takes forever.
+		# we need an update system...
+		#
+		# insert an ANSSlist into MySQL as catalogID={catID}. use tempCatID to temporarily dump existing data to a safe place,
+		# should something go wrong. reserve an option to skip this step for brevity.
+		#
+		sqlHost = 'localhost'
+		sqlUser = 'myoder'
+		sqlPassword = 'yoda'
+		sqlPort = 3306
+		sqlDB = 'QuakeData'
+		myConn = MySQLdb.connect(host=sqlHost, user=sqlUser, passwd=sqlPassword, port=sqlPort, db=sqlDB)
+		myConn2 = MySQLdb.connect(host=sqlHost, user=sqlUser, passwd=sqlPassword, port=sqlPort, db=sqlDB)
+		strDel=""
+		# if no list has been provided, get a current, complete world catalog:
+		#if anssList==None: anssList=getANSSlist([-180, 180], [-90, 90], 0, [dtm.date(1932,01,01), dtm.date.fromordinal(dtm.datetime.now().toordinal())], 9999999)
+		if anssList==None: anssList=getANSSlist([-180., 180.], [-90., 90.], 0, [dtm.datetime(1932,0o1,0o1, tzinfo=pytz.timezone('UTC')), dtm.datetime.now(pytz.timezone('UTC'))], 9999999)
+		print("ANSS list retrieved, len: %d" % len(anssList))
+		#
+		if tempCatID==None:
+			# get a save catID; use that one.
+			#strGetMaxID="select min(catalogID) from Earthquakes where catalogID>%d" % catID
+			strGetMaxID="select max(catalogID) from Earthquakes"
+			myConn.query(strGetMaxID)
+			rID=myConn.store_result()
+			# there should only be one value. for now, assume this is true (which is, in general, really bad DB programming form):
+			tempCatID=int(rID.fetch_row()[0][0])+1
+			#rID=None
+			strDel='delete from Earthquakes where catalogID=%d; update Earthquakes set catalogID=%d where catalogID=%d' % (tempCatID, tempCatID, catID)
 		
-	elif tempCatID==0:
-		# skip this step; just delete the catalog and hope all goes well.
-		strDel='delete from Earthquakes where catalogID=%d' % catID		
-	#
-	else:
-		# do we have a real backup catalogID? update the "real" id with the tempCatID value.
-		strDel='update Earthquakes set catalogID=%d where catalogID=%d' % (tempCatID, catID)
+		elif tempCatID==0:
+			# skip this step; just delete the catalog and hope all goes well.
+			strDel='delete from Earthquakes where catalogID=%d' % catID		
+		#
+		else:
+			# do we have a real backup catalogID? update the "real" id with the tempCatID value.
+			strDel='update Earthquakes set catalogID=%d where catalogID=%d' % (tempCatID, catID)
 		
-	myConn.query(strDel)
+		myConn.query(strDel)
 	
-	#
-	print("begin sql insert loop...")
-	for rw in anssList:
-		# write an insert string or command or whatever...
-		# one string, or a bunch? i don't think it matters for inserts.
-		# ... and this whole thing hast to be error handled (None, Null, quotes, etc.)...
-		#print "rw: %s" % rw
-		#insStr = "insert into QuakeData.Earthquakes (catalogID, eventDateTime, lat, lon, depth, mag, magType, nst, gap, clo, rms, src, catEventID) values (%d, '%s',%s, %s,%s, %s,%s, %s,%s, '%s',%s, '%s', '%s') " % (catID, str(rw[0]), str(rw[1]), str(rw[2]), str(rw[3]), str(rw[4]), str(rw[5]), str(rw[6]), str(rw[7]), str(rw[8]), str(rw[9]), str(rw[10]), str(rw[11]) )
-		insStr = "insert into QuakeData.Earthquakes (catalogID, eventDateTime, lat, lon, depth, mag, magType, src, catEventID) values (%d, '%s', %f, %f, %f, %f, '%s', '%s', '%s')" % (catID, str(rw[0]), float(rw[1]), float(rw[2]), float(rw[3]), float(rw[4]), str(rw[5]), str(rw[10]), str(rw[11]) )
-		#print insStr
-		# it might be faster to bundle these statements. also, it might not be a bad idea to remove unique constraints from the Earthquakes table to facilitate faster
-		# inserts. nominally, actual inserts could be done on threads to make it super speedy.
-		myConn2.query(insStr)
+		#
+		print("begin sql insert loop...")
+		for rw in anssList:
+			# write an insert string or command or whatever...
+			# one string, or a bunch? i don't think it matters for inserts.
+			# ... and this whole thing hast to be error handled (None, Null, quotes, etc.)...
+			#print "rw: %s" % rw
+			#insStr = "insert into QuakeData.Earthquakes (catalogID, eventDateTime, lat, lon, depth, mag, magType, nst, gap, clo, rms, src, catEventID) values (%d, '%s',%s, %s,%s, %s,%s, %s,%s, '%s',%s, '%s', '%s') " % (catID, str(rw[0]), str(rw[1]), str(rw[2]), str(rw[3]), str(rw[4]), str(rw[5]), str(rw[6]), str(rw[7]), str(rw[8]), str(rw[9]), str(rw[10]), str(rw[11]) )
+			insStr = "insert into QuakeData.Earthquakes (catalogID, eventDateTime, lat, lon, depth, mag, magType, src, catEventID) values (%d, '%s', %f, %f, %f, %f, '%s', '%s', '%s')" % (catID, str(rw[0]), float(rw[1]), float(rw[2]), float(rw[3]), float(rw[4]), str(rw[5]), str(rw[10]), str(rw[11]) )
+			#print insStr
+			# it might be faster to bundle these statements. also, it might not be a bad idea to remove unique constraints from the Earthquakes table to facilitate faster
+			# inserts. nominally, actual inserts could be done on threads to make it super speedy.
+			myConn2.query(insStr)
 	
-	myConn.close()
-	myConn2.close()
+		myConn.close()
+		myConn2.close()	
 
-
-def updateANSS2SQL(catID=523):
-	# this is the end-product. call this to update MySQL.QuakeData.Earthquakes with the most recent events; it will call other functions as necessary.
-	# this function assumes all existing data are correct and complete.
-	# here, we get the date of the most recent event and select from ANSS all events after that.
-	#
-	# also, ANSS allows only day-level queries, so we have to delete everything date>date0, then replace with all events date>date0
-	#
-	sqlHost = 'localhost'
-	sqlUser = 'myoder'
-	sqlPassword = 'yoda'
-	sqlPort = 3306
-	sqlDB = 'QuakeData'
-	myConn = MySQLdb.connect(host=sqlHost, user=sqlUser, passwd=sqlPassword, port=sqlPort, db=sqlDB)
-	myConn2 = MySQLdb.connect(host=sqlHost, user=sqlUser, passwd=sqlPassword, port=sqlPort, db=sqlDB)
-	strDel=""
-	# if no list has been provided, get a current, complete world catalog:
-	#if anssList==None: anssList=getANSSlist([-180, 180], [-90, 90], 0, [dtm.date(1932,01,01), datetime.date.fromordinal(datetime.datetime.now(tzutc).toordinal())], 9999999)
-	anssList=[]
-	# get a maximum date:
-	#sqlMaxDate="select max(eventDateTime) from Earthquakes where catalogID=%d" % catID
-	maxdates=myConn.cursor()
-	maxdates.execute("select max(eventDateTime) from Earthquakes where catalogID=%d" % catID)
-	maxDt=maxdates.fetchone()[0]
-	print("getList prams: (%s, %s, %s, %s, %s)" % ([-180, 180], [-90, 90], 0, [maxDt, dtm.date.fromordinal(dtm.datetime.now(tzutc).toordinal())], 9999999))
-	anssList=getANSSlist([-180, 180], [-90, 90], 0, [maxDt, dtm.datetime.now(tzutc)], 9999999)
+	def updateANSS2SQL(catID=523):
+		# this is the end-product. call this to update MySQL.QuakeData.Earthquakes with the most recent events; it will call other functions as necessary.
+		# this function assumes all existing data are correct and complete.
+		# here, we get the date of the most recent event and select from ANSS all events after that.
+		#
+		# also, ANSS allows only day-level queries, so we have to delete everything date>date0, then replace with all events date>date0
+		#
+		sqlHost = 'localhost'
+		sqlUser = 'myoder'
+		sqlPassword = 'yoda'
+		sqlPort = 3306
+		sqlDB = 'QuakeData'
+		myConn = MySQLdb.connect(host=sqlHost, user=sqlUser, passwd=sqlPassword, port=sqlPort, db=sqlDB)
+		myConn2 = MySQLdb.connect(host=sqlHost, user=sqlUser, passwd=sqlPassword, port=sqlPort, db=sqlDB)
+		strDel=""
+		# if no list has been provided, get a current, complete world catalog:
+		#if anssList==None: anssList=getANSSlist([-180, 180], [-90, 90], 0, [dtm.date(1932,01,01), datetime.date.fromordinal(datetime.datetime.now(tzutc).toordinal())], 9999999)
+		anssList=[]
+		# get a maximum date:
+		#sqlMaxDate="select max(eventDateTime) from Earthquakes where catalogID=%d" % catID
+		maxdates=myConn.cursor()
+		maxdates.execute("select max(eventDateTime) from Earthquakes where catalogID=%d" % catID)
+		maxDt=maxdates.fetchone()[0]
+		print("getList prams: (%s, %s, %s, %s, %s)" % ([-180, 180], [-90, 90], 0, [maxDt, dtm.date.fromordinal(dtm.datetime.now(tzutc).toordinal())], 9999999))
+		anssList=getANSSlist([-180, 180], [-90, 90], 0, [maxDt, dtm.datetime.now(tzutc)], 9999999)
 	
-	# now, delete most recent days events (they will be replaced):
-	strDel = "delete from Earthquakes where eventDateTime>='%s' and catalogID=%d" % (str(dtm.date(maxDt.year, maxDt.month, maxDt.day)), catID)
-	myConn.query(strDel)
-	for rw in anssList:
-		# write an insert string or command or whatever...
-		# one string, or a bunch? i don't think it matters for inserts.
-		# ... and this whole thing hast to be error handled (None, Null, quotes, etc.)...
-		#print "rw: %s" % rw
-		#insStr = "insert into QuakeData.Earthquakes (catalogID, eventDateTime, lat, lon, depth, mag, magType, nst, gap, clo, rms, src, catEventID) values (%d, '%s',%s, %s,%s, %s,%s, %s,%s, '%s',%s, '%s', '%s') " % (catID, str(rw[0]), str(rw[1]), str(rw[2]), str(rw[3]), str(rw[4]), str(rw[5]), str(rw[6]), str(rw[7]), str(rw[8]), str(rw[9]), str(rw[10]), str(rw[11]) )
-		insStr = "insert into QuakeData.Earthquakes (catalogID, eventDateTime, lat, lon, depth, mag, magType, src, catEventID) values (%d, '%s', %f, %f, %f, %f, '%s', '%s', '%s')" % (catID, str(rw[0]), float(rw[1]), float(rw[2]), float(rw[3]), float(rw[4]), str(rw[5]), str(rw[10]), str(rw[11]) )
-		#print insStr
-		# it might be faster to bundle these statements. also, it might not be a bad idea to remove unique constraints from the Earthquakes table to facilitate faster
-		# inserts. nominally, actual inserts could be done on threads to make it super speedy.
-		myConn2.query(insStr)
-	#
-	myConn.close()
-	myConn2.close()
+		# now, delete most recent days events (they will be replaced):
+		strDel = "delete from Earthquakes where eventDateTime>='%s' and catalogID=%d" % (str(dtm.date(maxDt.year, maxDt.month, maxDt.day)), catID)
+		myConn.query(strDel)
+		for rw in anssList:
+			# write an insert string or command or whatever...
+			# one string, or a bunch? i don't think it matters for inserts.
+			# ... and this whole thing hast to be error handled (None, Null, quotes, etc.)...
+			#print "rw: %s" % rw
+			#insStr = "insert into QuakeData.Earthquakes (catalogID, eventDateTime, lat, lon, depth, mag, magType, nst, gap, clo, rms, src, catEventID) values (%d, '%s',%s, %s,%s, %s,%s, %s,%s, '%s',%s, '%s', '%s') " % (catID, str(rw[0]), str(rw[1]), str(rw[2]), str(rw[3]), str(rw[4]), str(rw[5]), str(rw[6]), str(rw[7]), str(rw[8]), str(rw[9]), str(rw[10]), str(rw[11]) )
+			insStr = "insert into QuakeData.Earthquakes (catalogID, eventDateTime, lat, lon, depth, mag, magType, src, catEventID) values (%d, '%s', %f, %f, %f, %f, '%s', '%s', '%s')" % (catID, str(rw[0]), float(rw[1]), float(rw[2]), float(rw[3]), float(rw[4]), str(rw[5]), str(rw[10]), str(rw[11]) )
+			#print insStr
+			# it might be faster to bundle these statements. also, it might not be a bad idea to remove unique constraints from the Earthquakes table to facilitate faster
+			# inserts. nominally, actual inserts could be done on threads to make it super speedy.
+			myConn2.query(insStr)
+		#
+		myConn.close()
+		myConn2.close()
 	
-	return anssList
+		return anssList
 
-###############
+	###############
 
 def isnumeric(value):
   return str(value).replace(".", "").replace("-", "").isdigit()
